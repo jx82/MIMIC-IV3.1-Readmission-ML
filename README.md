@@ -1,6 +1,6 @@
 # 30-Day Readmission Prediction (MIMIC‑IV v3.1, XGBoost)
 
-**TL;DR (30 seconds):** I built an end‑to‑end machine‑learning pipeline that estimates a patient’s **risk of being readmitted within 30 days** of discharge. It uses the publicly available, **de‑identified** hospital dataset **MIMIC‑IV v3.1** and an **XGBoost** model. The goal: help care teams focus follow‑up resources on higher‑risk patients *before* they bounce back to the hospital.
+**TL;DR:** I built an end‑to‑end machine‑learning pipeline that estimates a patient’s **risk of being readmitted within 30 days** of discharge. It uses the publicly available, **de‑identified** hospital dataset **MIMIC‑IV v3.1** and an **XGBoost** model. The goal: help care teams focus follow‑up resources on higher‑risk patients *before* they bounce back to the hospital.
 
 > This README serves **two audiences**: a short **plain‑English overview** for non‑technical readers (e.g., HR / recruiters) and a **technical appendix** for hiring managers.
 
