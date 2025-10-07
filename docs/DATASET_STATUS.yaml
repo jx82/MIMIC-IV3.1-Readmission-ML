@@ -1,0 +1,20 @@
+mimic-v3.1:
+  access: credentialed
+  storage: "/Volumes/data/mimic-iv-3.1"   # not in git
+  loaded:
+    patients: true
+    admissions: true
+    diagnoses_icd: true
+    drgcodes: false
+    labevents: false
+  labels:
+    readmit_30d: true
+  features:
+    demographics: true
+    drg: in_progress
+    elixhauser: planned
+  models:
+    xgb_baseline: in_progress
+    calibration: planned
+nhanes:
+  loaded: false
