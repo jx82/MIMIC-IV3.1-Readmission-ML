@@ -6,7 +6,7 @@
 
 ---
 
-## 🧭 Executive Summary (Plain English — 1 minute)
+## 🧭 Executive Summary 
 
 - **Problem in one sentence:** Some patients come back to the hospital soon after discharge. This “30‑day readmission” is costly and stressful for patients and hospitals.
 - **What I built:** A model that gives each discharged patient a **risk score** for being readmitted within 30 days, so care teams can plan **follow‑up calls, meds reconciliation, or clinic visits**.
@@ -50,7 +50,7 @@
 
 ---
 
-## 🧑‍💼 Quick Facts for Recruiters / HR
+## 🧑‍💼 Quick Facts for Recruiters
 
 - **Domain:** Healthcare analytics (hospital quality / outcomes)
 - **Use‑case:** Predict 30‑day readmissions at discharge
@@ -74,7 +74,7 @@ data/, models/, reports/ # gitignored artifacts & data outside version control
 
 ---
 
-# 🧪 Technical Appendix (for Hiring Managers)
+# 🧪 Technical Appendix
 
 ### 1) Dataset & Tables (MIMIC‑IV v3.1)
 - **Location changes (v3.1):** The historical `core` module was removed; **`patients`**, **`admissions`**, and **`transfers`** now live in **`hosp`**.
