@@ -132,74 +132,71 @@ To prevent patient-level data leakage:
 - All admissions for a patient belong to **exactly one split**.
 - A stratified subject-level split is used to preserve readmission prevalence across splits.
 
-Leakage check:
-```python
-(df.groupby("subject_id")["split"].nunique() > 1).sum() == 0
+## Stratification, Modeling, and Analytical Roadmap
 
-
-## Stratification Strategy
+### Stratification Strategy
 Because 30-day readmission is a **class-imbalanced outcome**, a **stratified subject-level split** is used.
 
 - Stratification is performed at the **patient (subject) level**, based on whether a patient ever experienced a readmission.
-- This approach preserves **readmission prevalence** across training, validation, and test sets.
+- This preserves **readmission prevalence** across training, validation, and test sets.
 - All admissions for a given patient are assigned to the **same split**, preventing patient-level data leakage.
 - Admission-level label balance may vary slightly due to differing numbers of admissions per patient.
 
-This strategy balances **evaluation stability** with **strict leakage prevention**, which is critical for healthcare modeling.
+This approach balances **evaluation stability** with **strict leakage prevention**, which is critical in healthcare modeling.
 
 ---
 
-## Modeling Approach
+### Modeling Approach
 Baseline machine learning models include:
 - **Random Forest**
 - **XGBoost**
 
-### Modeling Characteristics
+#### Modeling Characteristics
 - Predictions are made at the **admission level**.
 - Patients may appear multiple times due to repeat admissions.
-- Repeated patients are **expected and appropriate**, as readmission risk is assessed at each discharge.
+- Repeated patients are **expected and appropriate**, as readmission risk is reassessed at every discharge.
 - Patient-level leakage is prevented through **subject-based splitting**.
 
-These baseline models establish performance benchmarks prior to adding higher-impact clinical features.
+These models serve as **baseline performance benchmarks** prior to incorporating higher-impact clinical features.
 
 ---
 
-## Model Interpretation and Explainability (Planned)
-Planned model interpretation methods include:
+### Model Interpretation and Explainability (Planned)
+Planned explainability methods include:
 - Feature importance analysis (tree-based models)
 - SHAP value analysis
 - Partial dependence plots for key risk factors
 
-These tools will be used to assess:
-- **Clinical plausibility**
-- **Model transparency**
-- **Trustworthiness of predictions**
+These methods will be used to:
+- Validate **clinical plausibility**
+- Improve **model transparency**
+- Support **trustworthy deployment**
 
-Interpretation methods are applied for **insight and validation**, not to imply causality.
+Interpretability tools are applied for **insight and validation**, not to imply causal relationships.
 
 ---
 
-## Future Work: Causal Inference Extension
+### Future Work: Causal Inference Extension
 While the current models are **predictive**, future work will explore **causal inference questions**, such as:
 
 - Does longer length of stay causally reduce readmission risk?
 - Do certain discharge dispositions reduce unplanned returns?
 - Are high-utilization patterns a cause of readmission or a marker of underlying patient complexity?
 
-### Planned Methods
+#### Planned Methods
 Potential causal approaches include:
 - Propensity score matching or weighting
 - Targeted Maximum Likelihood Estimation (TMLE)
 - Doubly robust estimators
 - Sensitivity analysis for unmeasured confounding
 
-### Important Note
-Causal inference analyses will be conducted **separately from predictive modeling**, with explicit assumptions and limitations documented.  
+#### Important Note
+Causal inference analyses will be conducted **separately from predictive modeling**, with explicit assumptions and limitations clearly documented.  
 **No causal claims are made in the current version of this project.**
 
 ---
 
-## What This Project Does Not Claim
+### What This Project Does Not Claim
 For transparency, this project does **not**:
 - Estimate patient-lifetime readmission risk
 - Perform survival or recurrent-event modeling
@@ -209,5 +206,5 @@ For transparency, this project does **not**:
 
 ---
 
-## Key Takeaway
+### Key Takeaway
 > *This project models 30-day unplanned readmission risk at the admission level using clinically aligned definitions, leakage-safe patient-level splitting, stratified evaluation, and a clear roadmap toward interpretable and causal healthcare analytics.*
