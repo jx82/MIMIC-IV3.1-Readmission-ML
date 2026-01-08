@@ -135,6 +135,8 @@ To prevent patient-level data leakage:
 Leakage check:
 ```python
 (df.groupby("subject_id")["split"].nunique() > 1).sum() == 0
+
+
 ## Stratification Strategy
 Because 30-day readmission is a **class-imbalanced outcome**, a **stratified subject-level split** is used.
 
