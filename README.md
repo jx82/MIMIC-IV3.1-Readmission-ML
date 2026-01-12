@@ -53,6 +53,21 @@ The difference between patient counts and admission counts reflects **repeat hos
 
 ---
 
+## Cohort Overview and Data Splits
+
+The final cohort consisted of **546,028 index admissions** with **11 variables**. Admissions were split at the **patient (subject) level** into training, validation, and test sets to prevent information leakage across encounters.
+
+| Split | Admissions (n) | Readmission Prevalence | Positive Cases |
+|------|---------------:|-----------------------:|---------------:|
+| Training (working sample) | 382,595 | 0.193 | 73,909 |
+| Validation | 81,303 | 0.193 | 15,722 |
+| Test | 82,130 | 0.193 | 15,870 |
+
+The **training set (n = 382,595)** served as the **working sample** for all exploratory analysis, feature engineering, and model fitting. The validation set was used for model selection and tuning, while the test set was reserved for final, unbiased performance evaluation.
+
+
+---
+
 ## Age Handling
 - Patient age is derived from `patients.anchor_age`.
 - The full age distribution was inspected prior to filtering.
