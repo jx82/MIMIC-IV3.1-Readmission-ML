@@ -195,11 +195,17 @@ This approach:
 - Preserves clinically meaningful timing of utilization  
 - Improves stability and interpretability in linear and logistic models  
 
-Moderate correlation may remain between these variables due to true patient utilization patterns; this reflects real signal rather than mathematical redundancy.
+### Correlation Between Prior Utilization Features
 
-               admits_past_6m  admits_6to12m
-admits_past_6m        1.000000       0.536785
-admits_6to12m         0.536785       1.000000
+After decomposing prior hospital utilization into recent (past 6 months) and earlier (6–12 months) windows, we examined the correlation between the two variables:
+
+|                    | admits_past_6m | admits_6to12m |
+|--------------------|---------------:|--------------:|
+| **admits_past_6m** | 1.000          | 0.537         |
+| **admits_6to12m**  | 0.537          | 1.000         |
+
+A moderate correlation remains because patients with recent hospital utilization are more likely to have had admissions earlier in the year as well. This correlation reflects **true patient**
+
 
 ---
 
