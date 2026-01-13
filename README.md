@@ -206,11 +206,62 @@ After decomposing prior hospital utilization into recent (past 6 months) and ear
 
 A moderate correlation remains because patients with recent hospital utilization are more likely to have had admissions earlier in the year as well. This correlation reflects **true patient**
 
+
+---
+
+
 ### Admission-Level Modeling and Use of Prior Admissions
 
 Although each patient (`subject_id`) may have multiple hospital admissions, the model is trained and evaluated at the **admission level**. Each row in the modeling dataset represents a single **index admission**, for which the model predicts the probability of 30-day readmission following discharge.
 
 Prior admissions for the same patient are **not used as prediction rows**. Instead, they are used exclusively to derive historical utilization features (e.g., admissions in the past 6 months or 6–12 months) for the index admission. All such features are computed using admission timestamps strictly preceding the index admission to prevent temporal leakage.
+
+### Illustration: How Prior Admissions Are Used in Admission-Level Modeling
+
+Although each patient (`subject_id`) may have multiple hospital admissions, the model is trained and evaluated at the **admission level**. Each row in the modeling dataset represents a single **index admission**, and the prediction target corresponds to the outcome following that admission (e.g., 30-day readmission).
+
+Prior admissions are **never used as prediction rows** for the same index admission. Instead, they are used **only to derive historical utilization features** for the index admission.
+
+---
+
+#### Example Patient Timeline
+
+**Raw admissions table**
+
+| subject_id | hadm_id | admittime   |
+|-----------:|--------:|-------------|
+| 101        | A1      | 2019-01-01  |
+| 101        | A2      | 2019-06-01  |
+| 101        | A3      | 2020-01-10  |
+
+---
+
+#### Admission-Level Modeling View
+
+Each admission becomes its own modeling row. Historical features are computed using **only admissions that occurred before the index admission**.
+
+| hadm_id (index) | admits_past_6m | admits_6to12m | label (30-day readmission) |
+|----------------:|---------------:|--------------:|---------------------------:|
+| A1              | 0              | 0             | readmit_30d(A1)            |
+| A2              | 1              | 0             | readmit_30d(A2)            |
+| A3              | 0              | 1             | readmit_30d(A3)            |
+
+---
+
+#### Key Points
+
+- Each row corresponds to a **current (index) admission**.
+- `admits_past_6m` counts admissions within 180 days **before** the index admission.
+- `admits_6to12m` counts admissions occurring 6–12 months **before** the index admission.
+- Prior admissions (e.g., A1, A2) are used **only as feature history** for later admissions and are **never used to predict outcomes for other rows**.
+- This design prevents temporal leakage and aligns with standard readmission modeling practice.
+
+---
+
+#### Summary
+
+> Even though a patient may have multiple admissions, predictions are always made at the admission level. Historical admissions contribute information to feature construction, but the model’s prediction target is always tied to the current admission only.
+
 
 ---
 
