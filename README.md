@@ -160,6 +160,49 @@ Because 30-day readmission is a **class-imbalanced outcome**, a **stratified sub
 This approach balances **evaluation stability** with **strict leakage prevention**, which is critical in healthcare modeling.
 
 ---
+## Prior Hospital Utilization Features (6–12 Month Look-back)
+
+This project derives Tier-1 prior utilization features from **MIMIC-IV `hosp.admissions`** to capture recent and historical hospital use while avoiding feature redundancy.
+
+---
+
+### Variables
+
+- **`admits_past_6m`**  
+  Number of inpatient hospital admissions for the same patient (`subject_id`) occurring within **180 days** prior to the index admission’s `admittime`.
+
+- **`admits_past_12m`**  
+  Number of inpatient hospital admissions for the same patient occurring within **365 days** prior to the index admission’s `admittime`.
+
+These two variables are **overlapping by definition**, because the 6-month window is fully contained within the 12-month window:
+
+
+Including both `admits_past_6m` and `admits_past_12m` directly in a regression-style model can introduce **multicollinearity**, leading to unstable coefficients and reduced interpretability.
+
+---
+
+### Collinearity Handling: Decomposition into Non-Overlapping Windows
+
+To reduce redundancy while preserving temporal information, we decompose the 12-month count into two components:
+
+- **Recent utilization:** `admits_past_6m`
+- **Earlier utilization:** `admits_6to12m` (admissions occurring **6–12 months** prior)
+
+admits_6to12m = admits_past_12m − admits_past_6m
+
+This approach:
+- Removes deterministic overlap between features  
+- Preserves clinically meaningful timing of utilization  
+- Improves stability and interpretability in linear and logistic models  
+
+Moderate correlation may remain between these variables due to true patient utilization patterns; this reflects real signal rather than mathematical redundancy.
+
+               admits_past_6m  admits_6to12m
+admits_past_6m        1.000000       0.536785
+admits_6to12m         0.536785       1.000000
+
+---
+
 
 ### Modeling Approach
 Baseline machine learning models include:
@@ -188,6 +231,7 @@ These methods will be used to:
 - Support **trustworthy deployment**
 
 Interpretability tools are applied for **insight and validation**, not to imply causal relationships.
+
 
 ---
 
