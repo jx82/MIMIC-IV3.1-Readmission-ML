@@ -206,6 +206,11 @@ After decomposing prior hospital utilization into recent (past 6 months) and ear
 
 A moderate correlation remains because patients with recent hospital utilization are more likely to have had admissions earlier in the year as well. This correlation reflects **true patient**
 
+### Admission-Level Modeling and Use of Prior Admissions
+
+Although each patient (`subject_id`) may have multiple hospital admissions, the model is trained and evaluated at the **admission level**. Each row in the modeling dataset represents a single **index admission**, for which the model predicts the probability of 30-day readmission following discharge.
+
+Prior admissions for the same patient are **not used as prediction rows**. Instead, they are used exclusively to derive historical utilization features (e.g., admissions in the past 6 months or 6–12 months) for the index admission. All such features are computed using admission timestamps strictly preceding the index admission to prevent temporal leakage.
 
 ---
 
