@@ -329,3 +329,13 @@ For transparency, this project does **not**:
 
 ### Key Takeaway
 > *This project models 30-day unplanned readmission risk at the admission level using clinically aligned definitions, leakage-safe patient-level splitting, stratified evaluation, and a clear roadmap toward interpretable and causal healthcare analytics.*
+
+
+| Notebook | Purpose |
+|--------|--------|
+| **00_setup.ipynb** | Step 0 — Project setup, imports, paths, random seeds, and global configuration |
+| **01_cohort.ipynb** | Steps 1–3 — Load raw data, define cohort & labels, and perform patient-level train/validation/test split |
+| **02_features.ipynb** | Steps 4–5 — Define working sample, feature lists, and perform feature engineering |
+| **03_modeling.ipynb** | Steps 6–11 — Build preprocessing pipelines, train models, validate performance, compare feature sets, and evaluate on test data |
+| **04_diagnostics.ipynb** | Step 12 — Model diagnostics, interpretation, calibration, and error analysis |
+| **README.md** | Pipeline overview, results summary, and key findings |
