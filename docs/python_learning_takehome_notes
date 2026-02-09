@@ -1,0 +1,40 @@
+# ============================================================
+# TAKE-HOME NOTE — CSV vs Python Variables vs DataFrame
+#
+# A CSV file (e.g., admissions.csv) is just plain text stored on disk.
+# To Python, it is “dead” until we load it.
+#
+# The file name lives on the file system:
+#     data/raw/admissions.csv
+#
+# The variable name lives inside Python:
+#     ADMISSIONS_FILE = RAW_DIR / "admissions.csv"
+#
+# Important distinctions:
+# - admissions.csv  → real file on disk
+# - ADMISSIONS_FILE → Python variable that points to the file
+# - Capital letters apply to the variable, NOT the file name
+#
+# When we run:
+#     admissions = pd.read_csv(ADMISSIONS_FILE)
+#
+# What happens:
+# - Python reads the CSV text
+# - pandas converts it into a DataFrame
+# - The data becomes “alive” and usable
+#
+# Mental model:
+# - CSV = storage format (dead text)
+# - DataFrame = working format (living data)
+# - ADMISSIONS_FILE = pointer, not the file itself
+#
+# Analogy:
+# - Book on shelf        → admissions.csv
+# - Bookmark label       → ADMISSIONS_FILE
+# - Book opened to read  → admissions (DataFrame)
+#
+# Key takeaway:
+# File names and variable names are different things.
+# Capital letters name the pointer, not the file.
+# CSV is stored; DataFrame is used.
+# ============================================================
