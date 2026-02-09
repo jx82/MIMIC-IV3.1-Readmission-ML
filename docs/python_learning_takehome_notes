@@ -38,3 +38,49 @@
 # Capital letters name the pointer, not the file.
 # CSV is stored; DataFrame is used.
 # ============================================================
+# TAKE-HOME NOTE — print() vs display()
+#
+# print():
+# - Outputs plain text
+# - Best for messages, numbers, shapes, and debugging
+# - Always works (Python standard)
+#
+# display():
+# - Renders rich objects (tables, DataFrames, HTML)
+# - Best for inspecting DataFrames visually
+# - Jupyter-specific (not for scripts)
+#
+# Rule of thumb:
+# - Use print() to say something
+# - Use display() to look at something
+#
+# One-line memory:
+# print() talks, display() shows.
+#
+# Example:
+# print(admissions.shape)     # say how big the data is
+# display(admissions.head()) # look at the data itself
+
+# ============================================================
+# TAKE-HOME FORMAT — How to use print() and display()
+# ============================================================
+
+# 1) Use print() for short text, numbers, and diagnostics
+print("admissions shape:", admissions.shape)
+print("patients shape:", patients.shape)
+print("Duplicate hadm_id:", admissions["hadm_id"].duplicated().sum())
+
+# 2) Use display() for inspecting tables or DataFrames
+display(admissions.head())
+display(patients.head())
+
+# 3) Combine them (recommended pattern)
+print("Admissions preview:")
+display(admissions.head())
+
+print("Patients preview:")
+display(patients.head())
+
+# One-line memory:
+# print() talks, display() shows.
+# ============================================================
