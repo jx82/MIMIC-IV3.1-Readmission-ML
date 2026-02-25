@@ -84,3 +84,255 @@ display(patients.head())
 # One-line memory:
 # print() talks, display() shows.
 # ============================================================
+MIMIC READMISSION PROJECT — STEP MAP (BIG PICTURE)
+
+--------------------------------------------------
+STEP 0 — PROJECT SETUP & GLOBAL CONFIGURATION
+--------------------------------------------------
+Purpose:
+- Set rules that every notebook follows
+- Define paths, constants, random seed
+- Avoid copy-paste and hidden bugs
+
+Key outputs:
+- config.py (paths, constants, helpers)
+
+Key idea:
+- Step 0 defines HOW we work, not WHAT we compute
+
+
+--------------------------------------------------
+STEP 1 — LOAD & UNDERSTAND RAW DATA
+--------------------------------------------------
+Purpose:
+- Load raw admissions.csv and patients.csv
+- Understand structure and relationships
+- Verify data integrity (no transformations)
+
+What we do:
+- Read CSVs into pandas DataFrames
+- Inspect columns, shapes, duplicates
+- Observe patient-level vs admission-level data
+- Explore distributions and outliers
+
+What we do NOT do:
+- No filtering
+- No label creation
+- No feature engineering
+- No saving new files
+
+Key idea:
+- Step 1 = “Look, don’t touch”
+
+
+--------------------------------------------------
+STEP 2 — DEFINE COHORT (WHO IS INCLUDED)
+--------------------------------------------------
+Purpose:
+- Decide which admissions are eligible
+- Define index admissions logically
+
+Typical decisions:
+- Adult-only vs all ages
+- Exclude in-hospital deaths
+- Exclude same-day transfers (optional)
+- Decide observation window
+
+Output:
+- Clean cohort definition (still no labels yet)
+
+Key idea:
+- Step 2 defines WHO is in the study
+
+
+--------------------------------------------------
+STEP 3 — LABEL CONSTRUCTION (OUTCOME) - 02-20-2026
+--------------------------------------------------
+Purpose:
+- Create the target variable (readmission within 30 days)
+
+What we do:
+- Sort admissions by patient and time
+- Look at the NEXT admission for each admission
+- Compute days from discharge → next admission
+- Assign label_readmit_30d = 1 or 0
+
+Critical rule:
+- Labels may use future information
+- Features must NOT
+
+Output:
+- Cohort + label_readmit_30d
+
+Key idea:
+- Step 3 defines WHAT we are predicting
+
+
+--------------------------------------------------
+STEP 4 — FEATURE ENGINEERING 
+--------------------------------------------------
+Purpose:
+- Create predictors using information available
+  BEFORE or AT discharge
+
+Examples:
+- Prior admissions count
+- Length of stay
+- Diagnosis counts
+- Demographics
+- Comorbidities
+
+Rules:
+- No future information
+- Drop ID columns from features
+- Keep labels separate
+
+Output:
+- Feature table (e.g., mimic_readmission_features.parquet)
+
+Key idea:
+- Step 4 defines WHAT the model can see
+
+
+--------------------------------------------------
+STEP 5 — TRAIN / VALIDATION / TEST SPLIT
+--------------------------------------------------
+Purpose:
+- Create fair, leakage-free splits
+
+Critical rule:
+- Split by subject_id (patient), NOT by admission
+
+Why:
+- Same patient must never appear in train and test
+
+Output:
+- Split column (train / val / test)
+
+Key idea:
+- Step 5 defines HOW we evaluate fairly
+
+
+--------------------------------------------------
+STEP 6 — BASELINE MODELING
+--------------------------------------------------
+Purpose:
+- Establish a simple benchmark
+
+Models:
+- Logistic regression
+- Simple rules (e.g., prior admissions)
+
+Why:
+- You need a baseline before complex models
+
+Output:
+- Baseline metrics (AUC, accuracy, etc.)
+
+Key idea:
+- If fancy models don’t beat baseline, stop
+
+
+--------------------------------------------------
+STEP 7 — ADVANCED MODELING
+--------------------------------------------------
+Purpose:
+- Improve performance over baseline
+
+Models:
+- Random Forest
+- XGBoost
+- Regularized logistic models
+
+What we track:
+- Performance
+- Stability
+- Interpretability
+
+Key idea:
+- Better ≠ more complex unless proven
+
+
+--------------------------------------------------
+STEP 8 — MODEL EVALUATION
+--------------------------------------------------
+Purpose:
+- Evaluate final model honestly
+
+What we check:
+- ROC / AUC
+- Precision–Recall
+- Calibration
+- Performance by subgroup
+
+Key idea:
+- A good model must generalize
+
+
+--------------------------------------------------
+STEP 9 — INTERPRETABILITY & DIAGNOSTICS
+--------------------------------------------------
+Purpose:
+- Understand WHY the model predicts what it does
+
+Tools:
+- Feature importance
+- SHAP values
+- Error analysis
+
+Key idea:
+- If you can’t explain it, you can’t trust it
+
+
+--------------------------------------------------
+STEP 10 — DOCUMENTATION & RESULTS
+--------------------------------------------------
+Purpose:
+- Make the work reproducible and explainable
+
+Outputs:
+- README
+- Figures
+- Tables
+- Final conclusions
+
+Key idea:
+- The project isn’t done until it’s explainable
+
+# ===============================================================
+# Feature Engineering Strategy: Tiered Framework (Tier 1 / 2 / 3)
+# ===============================================================
+
+## Why Use Tiering?
+
+We organize features into tiers to:
+
+1. Prevent data leakage
+2. Measure incremental predictive value
+3. Improve interpretability
+4. Support model governance
+5. Enable structured experimentation
+
+This approach mirrors production risk modeling workflows.
+
+---------------------------------------------------------------
+Tier Definitions
+---------------------------------------------------------------
+
+Tier 1: Core Administrative Features
+- Demographics (age, gender)
+- Length of stay (LOS)
+- Prior utilization metrics
+
+Tier 2: Clinical Severity Features
+- Diagnosis count
+- Comorbidity indicators
+- Procedure count
+- ICU stay flag
+
+Tier 3: Temporal Aggregation Features
+- Lab abnormalities prior to discharge
+- Medication counts
+- Time-based summaries
+
+All features must be available on or before discharge time.
