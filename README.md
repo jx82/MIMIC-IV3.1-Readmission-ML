@@ -464,25 +464,24 @@ X = features_df
 y = cohort["label_readmit_30d"]
 
 
-## 🧱 Tier 1 Features — Foundational Baseline Model
+## 🧱 Tier 1 Features — Baseline Model
 
-Tier 1 features represent the minimal, leakage-safe baseline feature set.  
-These variables are simple, high-signal predictors that require limited engineering and are fully available at or before discharge.
+Tier 1 features form the foundational baseline model.  
+They include simple, high-signal variables that are fully available at or before discharge and require minimal feature engineering.
 
-The goal of Tier 1 is to establish a strong baseline model before introducing more complex clinical abstractions.
+The purpose of Tier 1 is to establish a strong, leakage-safe performance baseline before introducing more complex clinical features in later tiers.
 
 ---
 
-### 📊 Tier 1 Feature List
+### 📊 Tier 1 Feature Set
 
-| Feature | Description | Rationale |
-|----------|-------------|-----------|
-| `age_at_admission` | Patient age at index admission | Age is a strong and stable predictor of readmission risk |
-| `gender` | Biological sex | Captures demographic risk differences |
-| `los_days` | Length of stay for index admission | Proxy for illness severity and complexity |
-| `prior_admission_count` | Total number of admissions prior to index admission | Captures long-term utilization intensity |
-| `prior_30d_admits` | Number of admissions in the 30 days before index admission | Measures short-term instability |
-| `days_since_last_admit` *(if included)* | Time gap between current and previous admission | Recency signal of health deterioration |
+| Feature | Description | Why It Matters |
+|----------|-------------|----------------|
+| `age_at_admission` | Patient age at index admission | Age is one of the strongest and most stable predictors of readmission risk |
+| `gender` | Patient biological sex | Captures baseline demographic differences |
+| `los_days` | Length of stay for index admission | Proxy for illness severity and hospitalization complexity |
+| `prior_admission_count` | Total number of admissions before index admission | Measures long-term healthcare utilization intensity |
+| `prior_30d_admits` | Admissions within 30 days prior to index admission | Captures short-term instability and acute deterioration |
 
 ---
 
@@ -490,28 +489,27 @@ The goal of Tier 1 is to establish a strong baseline model before introducing mo
 
 Tier 1 features are intentionally:
 
-- ✅ Timestamp-safe  
-- ✅ Leakage-free  
-- ✅ Low engineering complexity  
-- ✅ Clinically interpretable  
-- ✅ Strong baseline predictors  
+- Leakage-safe  
+- Timestamp-aware  
+- Low engineering complexity  
+- Clinically interpretable  
+- Strong baseline predictors  
 
-No diagnosis grouping, ICU flags, medication counts, or comorbidity indices are included at this stage.
+No diagnosis groupings, comorbidity indices, ICU flags, medication counts, or discharge disposition variables are included at this stage.
 
 ---
 
-### 🧠 Modeling Purpose
+### 🧠 Modeling Objective
 
-Tier 1 answers:
+Tier 1 answers the question:
 
-> How well can we predict readmission using only demographics and basic utilization history?
+> How well can we predict 30-day readmission using only demographics and prior utilization history?
 
-This baseline establishes a performance reference point before introducing more advanced clinical and severity-based features in Tier 2 and Tier 3.
+This baseline provides a reference point for measuring incremental performance gains from more advanced feature tiers.
 
 ---
 
 ### 📈 Expected Signal
 
-Utilization-based features (especially `prior_30d_admits` and `prior_admission_count`) are typically among the strongest predictors of 30-day readmission.
-
-Tier 2 features will evaluate whether additional clinical burden signals provide incremental lift beyond this utilization baseline.
+Utilization-based variables (`prior_admission_count`, `prior_30d_admits`) are typically among the strongest predictors of readmission.  
+Tier 2 will evaluate whether additional clinical severity features improve performance beyond this baseline.
