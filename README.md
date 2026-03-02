@@ -341,90 +341,124 @@ For transparency, this project does **not**:
 | **README.md** | Pipeline overview, results summary, and key findings |
 
 
-🧱 Data Architecture: Why We Separate Cohort, Labels, and Features
-Overview
-This project follows a modular, production-style ML pipeline where:
-Cohort (S + Y) defines the study population and outcome.
-Features (X) define the model inputs.
-Modeling stage consumes both artifacts without modifying them.
-Separating these components improves reproducibility, prevents leakage, and mirrors real-world ML system design.
-1️⃣ Cohort (S + Y)
-Location: data/processed/mimic_readmission_cohort.csv
-The cohort table defines:
-hadm_id (admission-level key)
-subject_id
-timestamps (admittime, dischtime)
-label_readmit_30d (target variable)
-split (train / validation / test)
-Purpose
-The cohort answers:
-Who is included in the study, and what was the outcome?
-This is study design, not feature engineering.
-The cohort should remain stable unless:
-Inclusion criteria change
-Label logic changes
-Data split strategy changes
-2️⃣ Features (X)
-Location: data/features/mimic_readmission_features.parquet
-The feature table contains:
-Demographics (e.g., age)
-Utilization history (e.g., prior admissions)
-Engineered temporal features
-Derived model inputs
-Purpose
-Features answer:
-What information is available at prediction time?
-Features must:
-Be timestamp-safe
-Avoid future information
-Exclude the target label
-Exclude split indicators
-3️⃣ Why We Do NOT Combine Them
-🚨 Prevent Data Leakage
-Keeping label_readmit_30d outside the feature table ensures:
-The model never accidentally trains on the target.
-Split information does not leak into features.
-Feature engineering remains prediction-time safe.
-🔄 Enable Modular Development
-This structure allows:
-Updating feature logic without recreating the cohort
-Testing multiple feature sets against the same cohort
-Running alternative models without redefining labels
-🧪 Improve Reproducibility
-Each pipeline stage produces a deterministic artifact:
-Step	Output
-Step 3	Cohort (S + Y)
-Step 4	Features (X)
-Step 5	Model artifacts
-Downstream steps read artifacts rather than relying on notebook memory.
-🏗 Mirror Production ML Systems
-In real-world ML systems:
-Label construction is separate from feature computation.
-Features are stored independently.
-Models consume standardized inputs.
-This project mirrors that architecture intentionally.
-4️⃣ Modeling Workflow
-During training:
-X = features_df
-y = cohort[TARGET_COL]
-Only at training time are X and y joined logically — not structurally.
-This enforces:
-Clean separation of concerns
-Clear audit trail
-Reduced risk of contamination
-5️⃣ Directory Structure
-data/
-  raw/        # original MIMIC tables
-  processed/  # cohort + labels (Step 3 output)
-  features/   # engineered features (Step 4 output)
+## 🧱 Data Architecture: Why We Separate Cohort, Labels, and Features
 
-artifacts/
-  models/
-  metrics/
-  plots/
-6️⃣ Design Philosophy
-This separation reflects three core principles:
-Leakage awareness
-Modularity
-Reproducibility
-The goal is not just to build a working model, but to build a maintainable, production-ready ML workflow.
+This project follows a modular, production-style ML pipeline where:
+
+- **Cohort (S + Y)** defines the study population and outcome.
+- **Features (X)** define the model inputs.
+- The modeling stage consumes both artifacts without modifying them.
+
+Separating these components improves reproducibility, prevents leakage, and mirrors real-world ML system design.
+
+---
+
+### 1️⃣ Cohort (S + Y)
+
+**Location:** `data/processed/mimic_readmission_cohort.csv`
+
+The cohort table defines:
+
+- `hadm_id`
+- `subject_id`
+- Admission & discharge timestamps
+- `label_readmit_30d`
+- `split` (train / validation / test)
+
+**Purpose**
+
+The cohort answers:
+
+> Who is included in the study and what was the outcome?
+
+This is study design logic — not feature engineering.
+
+The cohort should remain stable unless:
+
+- Inclusion criteria change  
+- Label logic changes  
+- Data split strategy changes  
+
+---
+
+### 2️⃣ Features (X)
+
+**Location:** `data/features/mimic_readmission_features.parquet`
+
+The feature table contains:
+
+- Demographics (e.g., age)
+- Utilization history
+- Engineered temporal signals
+- Derived model inputs
+
+**Purpose**
+
+The feature table answers:
+
+> What information is available at prediction time?
+
+Features must:
+
+- Be timestamp-safe  
+- Avoid future information  
+- Exclude the target label  
+- Exclude split indicators  
+
+---
+
+### 🚫 Why We Do NOT Combine Them
+
+#### Prevent Data Leakage
+
+Keeping `label_readmit_30d` outside the feature table ensures:
+
+- The model never accidentally trains on the target.
+- Split information does not leak into training.
+- Feature engineering remains prediction-time safe.
+
+---
+
+#### Enable Modular Development
+
+This structure allows:
+
+- Updating feature logic without recreating the cohort.
+- Testing multiple feature sets against the same cohort.
+- Running alternative models without redefining labels.
+
+---
+
+#### Improve Reproducibility
+
+Each pipeline stage produces a deterministic artifact:
+
+| Stage | Output |
+|-------|--------|
+| Step 3 | Cohort (S + Y) |
+| Step 4 | Features (X) |
+| Step 5 | Model artifacts |
+
+Downstream steps read artifacts from disk rather than relying on notebook memory.
+
+---
+
+#### Mirror Production ML Systems
+
+In real-world ML systems:
+
+- Label construction is separate from feature computation.
+- Features are stored independently.
+- Models consume standardized inputs.
+
+This project mirrors that architecture intentionally.
+
+---
+
+### 🧠 Modeling Workflow
+
+During training:
+
+```python
+X = features_df
+y = cohort["label_readmit_30d"]
