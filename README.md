@@ -462,3 +462,56 @@ During training:
 ```python
 X = features_df
 y = cohort["label_readmit_30d"]
+
+
+## 🧱 Tier 1 Features — Foundational Baseline Model
+
+Tier 1 features represent the minimal, leakage-safe baseline feature set.  
+These variables are simple, high-signal predictors that require limited engineering and are fully available at or before discharge.
+
+The goal of Tier 1 is to establish a strong baseline model before introducing more complex clinical abstractions.
+
+---
+
+### 📊 Tier 1 Feature List
+
+| Feature | Description | Rationale |
+|----------|-------------|-----------|
+| `age_at_admission` | Patient age at index admission | Age is a strong and stable predictor of readmission risk |
+| `gender` | Biological sex | Captures demographic risk differences |
+| `los_days` | Length of stay for index admission | Proxy for illness severity and complexity |
+| `prior_admission_count` | Total number of admissions prior to index admission | Captures long-term utilization intensity |
+| `prior_30d_admits` | Number of admissions in the 30 days before index admission | Measures short-term instability |
+| `days_since_last_admit` *(if included)* | Time gap between current and previous admission | Recency signal of health deterioration |
+
+---
+
+### 🎯 Design Principles
+
+Tier 1 features are intentionally:
+
+- ✅ Timestamp-safe  
+- ✅ Leakage-free  
+- ✅ Low engineering complexity  
+- ✅ Clinically interpretable  
+- ✅ Strong baseline predictors  
+
+No diagnosis grouping, ICU flags, medication counts, or comorbidity indices are included at this stage.
+
+---
+
+### 🧠 Modeling Purpose
+
+Tier 1 answers:
+
+> How well can we predict readmission using only demographics and basic utilization history?
+
+This baseline establishes a performance reference point before introducing more advanced clinical and severity-based features in Tier 2 and Tier 3.
+
+---
+
+### 📈 Expected Signal
+
+Utilization-based features (especially `prior_30d_admits` and `prior_admission_count`) are typically among the strongest predictors of 30-day readmission.
+
+Tier 2 features will evaluate whether additional clinical burden signals provide incremental lift beyond this utilization baseline.
