@@ -463,7 +463,7 @@ During training:
 X = features_df
 y = cohort["label_readmit_30d"]
 
----
+```
 
 ## 🧱 Tier 1 Features — Baseline Model
 
