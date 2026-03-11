@@ -514,3 +514,220 @@ This baseline provides a reference point for measuring incremental performance g
 
 Utilization-based variables (`prior_admission_count`, `prior_30d_admits`) are typically among the strongest predictors of readmission.  
 Tier 2 will evaluate whether additional clinical severity features improve performance beyond this baseline.
+
+Here is a **clean README version** you can put directly in your **GitHub repository or documentation folder** for your MIMIC readmission project.
+
+---
+
+# Charlson Comorbidity Index vs Diagnosis Count
+
+## Overview
+
+In healthcare predictive modeling, especially for **hospital readmission prediction**, two commonly used features that capture **patient disease burden** are:
+
+* **Diagnosis Count**
+* **Charlson Comorbidity Index (CCI)**
+
+Although both relate to patient diagnoses, they measure **different aspects of clinical risk**. Using both features together improves model performance and interpretability.
+
+---
+
+# 1. Diagnosis Count
+
+## Definition
+
+Diagnosis Count measures the **total number of diagnosis codes (ICD-9 or ICD-10)** assigned to a patient during a hospital admission.
+
+```text
+diagnosis_count = number of diagnosis codes for an admission
+```
+
+These diagnoses include:
+
+* Primary diagnosis
+* Secondary diagnoses
+* Complications discovered during hospitalization
+
+---
+
+## Example
+
+| ICD Code | Condition      |
+| -------- | -------------- |
+| J18.9    | Pneumonia      |
+| I10      | Hypertension   |
+| E78.5    | Hyperlipidemia |
+| K21.9    | GERD           |
+| M54.5    | Low back pain  |
+| E11.9    | Diabetes       |
+
+```
+diagnosis_count = 6
+```
+
+---
+
+## Interpretation
+
+Diagnosis count captures **clinical complexity**.
+
+Higher diagnosis counts often indicate:
+
+* multiple comorbid conditions
+* complicated treatment
+* increased care coordination
+* higher readmission risk
+
+Example interpretation:
+
+| Diagnosis Count | Clinical Meaning    |
+| --------------- | ------------------- |
+| 1–2             | Low complexity      |
+| 3–5             | Moderate complexity |
+| 6+              | High complexity     |
+
+---
+
+# 2. Charlson Comorbidity Index (CCI)
+
+## Definition
+
+The **Charlson Comorbidity Index** measures **severity of chronic diseases** known to increase mortality risk.
+
+Unlike diagnosis count, Charlson **does not count every diagnosis**.
+It only includes **a predefined list of serious chronic diseases**.
+
+Each condition is assigned a **weight** based on its mortality risk.
+
+---
+
+## Example Charlson Conditions
+
+| Condition                | Weight |
+| ------------------------ | ------ |
+| Myocardial infarction    | 1      |
+| Congestive heart failure | 1      |
+| COPD                     | 1      |
+| Diabetes                 | 1      |
+| Moderate renal disease   | 2      |
+| Cancer                   | 2      |
+| Severe liver disease     | 3      |
+| Metastatic cancer        | 6      |
+| HIV/AIDS                 | 6      |
+
+Charlson score is the **sum of all condition weights**.
+
+---
+
+## Example Patient
+
+Suppose a patient has the following diagnoses:
+
+| ICD Code | Condition      | Charlson Included |
+| -------- | -------------- | ----------------- |
+| J18.9    | Pneumonia      | No                |
+| I10      | Hypertension   | No                |
+| E78.5    | Hyperlipidemia | No                |
+| K21.9    | GERD           | No                |
+| M54.5    | Low back pain  | No                |
+| E11.9    | Diabetes       | Yes (weight = 1)  |
+
+Result:
+
+```
+diagnosis_count = 6
+charlson_score = 1
+```
+
+Although the patient has **six diagnoses**, only **diabetes** is included in the Charlson index.
+
+---
+
+# Key Differences
+
+| Feature         | Measures                     | Interpretation              |
+| --------------- | ---------------------------- | --------------------------- |
+| Diagnosis Count | Number of diagnoses          | Overall clinical complexity |
+| Charlson Score  | Severity of chronic diseases | Mortality risk              |
+
+Example comparison:
+
+| Patient   | Diagnosis Count   | Charlson Score |
+| --------- | ----------------- | -------------- |
+| Patient A | 6 minor diagnoses | 1              |
+| Patient B | 2 severe diseases | 6              |
+
+Patient B has **higher clinical risk**, even with fewer diagnoses.
+
+---
+
+# Why Models Use Both Features
+
+Modern healthcare predictive models often include both variables because they capture **different signals**.
+
+### Diagnosis Count captures
+
+* coding complexity
+* disease burden
+* clinical workload
+* multi-condition patients
+
+### Charlson Index captures
+
+* severity of chronic disease
+* long-term health risk
+* mortality risk
+
+Using both features improves:
+
+* predictive accuracy
+* model interpretability
+* clinical relevance
+
+---
+
+# Usage in Readmission Models
+
+In a typical **hospital readmission prediction model**, these features appear in the **Clinical Burden (Tier 2)** group.
+
+Example feature set:
+
+```text
+Tier 2 — Clinical Burden
+
+charlson_score
+diagnosis_count
+procedure_count
+los_days
+icu_flag
+```
+
+These variables represent:
+
+* chronic disease severity
+* hospitalization complexity
+* care intensity
+
+---
+
+# Key Takeaway
+
+Diagnosis Count and Charlson Index are **complementary features**:
+
+* **Diagnosis Count → complexity**
+* **Charlson Index → severity**
+
+Together they provide a more complete picture of patient health and are widely used in **hospital analytics, payer risk models, and readmission prediction systems**.
+
+---
+
+If you want, I can also give you a **very professional README section for your entire Tier-2 feature block**, including:
+
+* Charlson
+* diagnosis_count
+* procedure_count
+* ICU indicators
+* LOS
+
+This would look **very strong in your GitHub portfolio for healthcare data science roles**.
+
