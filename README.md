@@ -731,3 +731,205 @@ If you want, I can also give you a **very professional README section for your e
 
 This would look **very strong in your GitHub portfolio for healthcare data science roles**.
 
+Here is a **clean README section** explaining the ML pipeline and the reason for the confusion. You can paste this directly into your **project documentation or GitHub README**.
+
+---
+
+# Machine Learning Pipeline and Feature Merging Strategy
+
+## Overview
+
+In this project, the prediction task is **30-day hospital readmission prediction**.
+The fundamental modeling unit is a **hospital admission**.
+
+This means:
+
+```text
+1 row in the modeling dataset = 1 hospital admission (hadm_id)
+```
+
+Because of this design, all engineered features must eventually be aligned at the **admission level**.
+
+---
+
+# ML Pipeline Structure
+
+The machine learning pipeline follows a structured workflow that separates **cohort creation**, **feature engineering**, and **model training**.
+
+```
+Raw EHR Tables
+    │
+    ├── patients
+    ├── admissions
+    ├── diagnoses_icd
+    ├── procedures_icd
+    ├── chartevents
+    └── labevents
+          │
+          ▼
+Step 1 — Cohort Construction
+(admissions table becomes prediction unit)
+          │
+          ▼
+Step 2 — Feature Engineering
+aggregate clinical tables into admission-level features
+          │
+          ▼
+Step 3 — Feature Dataset
+cohort + engineered features
+          │
+          ▼
+Step 4 — Modeling Dataset
+X = feature matrix
+y = readmission label
+          │
+          ▼
+Step 5 — Model Training
+(Logistic Regression, Random Forest, XGBoost)
+```
+
+---
+
+# Why Features Are Merged Into the Cohort Table
+
+During feature engineering, information from multiple EHR tables must be **aggregated to the admission level** before modeling.
+
+Example:
+
+**Diagnoses Table**
+
+| subject_id | hadm_id | icd_code |
+| ---------- | ------- | -------- |
+| 1001       | 20001   | I50.9    |
+| 1001       | 20001   | E11.9    |
+| 1001       | 20001   | N18.3    |
+
+This table contains **multiple rows per admission**.
+
+To convert this information into a modeling feature, we aggregate it:
+
+```
+diagnosis_count = number of diagnosis codes per hadm_id
+```
+
+Result:
+
+| hadm_id | diagnosis_count |
+| ------- | --------------- |
+| 20001   | 3               |
+| 20005   | 5               |
+
+This feature is then merged into the **cohort (admissions) table**.
+
+---
+
+# Cohort After Feature Engineering
+
+| hadm_id | age | diagnosis_count | charlson_score | readmitted_30d |
+| ------- | --- | --------------- | -------------- | -------------- |
+| 20001   | 72  | 7               | 4              | 1              |
+| 20005   | 74  | 3               | 1              | 0              |
+
+At this stage, we have a **complete feature dataset aligned at the admission level**.
+
+---
+
+# Creating the Model Inputs
+
+Only after all features are added do we create the model inputs:
+
+```python
+feature_cols = [
+    "age",
+    "diagnosis_count",
+    "charlson_score",
+    "los_days",
+    "icu_flag"
+]
+
+X = admissions[feature_cols]
+y = admissions["readmitted_30d"]
+```
+
+Here:
+
+* **X** = feature matrix
+* **y** = prediction target
+
+---
+
+# Why the Confusion Happens
+
+The confusion often arises because in some notebooks **`X` is created early as a copy of the cohort table**.
+
+Example:
+
+```python
+X = cohort.copy()
+```
+
+Then features are added directly:
+
+```python
+X = X.merge(charlson_table, on="hadm_id", how="left")
+```
+
+Conceptually, this is equivalent to merging features into the **cohort table**, but the variable name (`X`) makes it appear as if features are being added to the modeling matrix prematurely.
+
+---
+
+# Recommended Naming for Clarity
+
+To avoid confusion, many production pipelines use this structure:
+
+```
+cohort
+   ↓
+features
+   ↓
+model_dataset
+   ↓
+X / y
+```
+
+Example:
+
+```python
+features = cohort.copy()
+
+features = features.merge(diagnosis_count, on="hadm_id", how="left")
+features = features.merge(charlson_table, on="hadm_id", how="left")
+
+X = features[feature_columns]
+y = features[target]
+```
+
+This makes the workflow clearer and separates **feature engineering** from **model input construction**.
+
+---
+
+# Key Takeaway
+
+In healthcare machine learning pipelines:
+
+* The **cohort table defines the prediction unit** (one row per admission).
+* All features must be **aggregated to that same level**.
+* Features are usually merged into the **cohort table first**, and the modeling matrix `X` is created afterward.
+
+Diagnosis count, Charlson score, and other clinical features therefore follow the same process:
+
+```
+raw clinical table
+        ↓
+aggregate by hadm_id
+        ↓
+merge into cohort
+        ↓
+construct X and y
+```
+
+This structure ensures consistent data alignment, avoids duplicated records, and produces a clean feature dataset for model training.
+
+---
+
+If you'd like, I can also give you a **very nice README diagram for your whole MIMIC project pipeline** (cohort → Tier1 → Tier2 → Tier3 → modeling). It will make your GitHub project look **very polished and professional**.
