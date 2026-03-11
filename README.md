@@ -13,6 +13,498 @@ This project is designed to mirror **real-world healthcare analytics workflows**
 
 ---
 
+Below is an **updated README-style ML pipeline section** that incorporates the step you just realized you missed (**removing in-hospital deaths**) and aligns with the features you’ve already built (`diagnosis_count`, `procedure_count`, `icu_flag`, etc.).
+
+You can paste this directly into your **project README**.
+
+---
+
+# Machine Learning Pipeline
+
+## Overview
+
+This project builds a **30-day hospital readmission prediction model** using the **MIMIC-IV dataset**.
+The prediction unit is a **hospital admission (`hadm_id`)**, meaning each row in the modeling dataset represents **one hospitalization event**.
+
+All features must therefore be aggregated at the **admission level** before training the model.
+
+---
+
+# Pipeline Structure
+
+```text
+Raw EHR Tables (MIMIC-IV)
+        │
+        ├── admissions
+        ├── patients
+        ├── diagnoses_icd
+        ├── procedures_icd
+        ├── icustays
+        ├── labevents
+        └── chartevents
+                │
+                ▼
+Step 1 — Cohort Construction
+Select eligible hospital admissions
+                │
+                ▼
+Step 2 — Apply Cohort Filters
+Remove admissions not eligible for readmission prediction
+                │
+                ▼
+Step 3 — Generate Readmission Labels
+Determine whether each admission is followed by a readmission within 30 days
+                │
+                ▼
+Step 4 — Feature Engineering
+Aggregate clinical information to admission level
+                │
+                ▼
+Step 5 — Build Modeling Dataset
+Create feature matrix X and label vector y
+                │
+                ▼
+Step 6 — Model Training
+Logistic Regression, Random Forest, XGBoost
+                │
+                ▼
+Step 7 — Model Evaluation
+ROC-AUC, feature importance, SHAP analysis
+```
+
+---
+
+# Step 1 — Cohort Construction
+
+The **admissions table** defines the base cohort.
+
+Each row represents a **single hospital admission**:
+
+| subject_id | hadm_id | admittime | dischtime |
+| ---------- | ------- | --------- | --------- |
+
+Prediction unit:
+
+```text
+1 row = 1 hospital admission
+```
+
+---
+
+# Step 2 — Cohort Filters
+
+Certain admissions are removed because they **cannot experience a future readmission**.
+
+### Exclusion Criteria
+
+1. **In-hospital deaths**
+
+Patients who died during hospitalization cannot be readmitted.
+
+Filtered using:
+
+```python
+hospital_expire_flag == 0
+```
+
+2. **(Optional) Hospice discharges**
+
+Hospice patients are typically excluded in readmission studies.
+
+3. **(Optional) Pediatric admissions**
+
+Many readmission studies restrict to **adult patients**.
+
+---
+
+### Example Implementation
+
+```python
+admissions = admissions[admissions["hospital_expire_flag"] == 0]
+```
+
+---
+
+# Step 3 — Readmission Label Construction
+
+The target variable is:
+
+```text
+readmitted_30d
+```
+
+Definition:
+
+```text
+1 = patient readmitted within 30 days of discharge
+0 = no readmission within 30 days
+```
+
+This is calculated by comparing:
+
+* discharge time of the current admission
+* admission time of the next hospitalization for the same patient.
+
+---
+
+# Step 4 — Feature Engineering
+
+Clinical data from multiple tables are aggregated into **admission-level features**.
+
+Example:
+
+| Source Table   | Feature            |
+| -------------- | ------------------ |
+| diagnoses_icd  | diagnosis_count    |
+| procedures_icd | procedure_count    |
+| diagnoses_icd  | charlson_score     |
+| icustays       | icu_flag           |
+| admissions     | los_days           |
+| admissions     | discharge_location |
+
+---
+
+## Tier 1 — Baseline Administrative Features
+
+```text
+age
+gender
+ethnicity
+insurance
+prior_admission_count
+prior_30d_admits
+admission_type
+```
+
+---
+
+## Tier 2 — Clinical Burden & Care Intensity
+
+```text
+charlson_score
+diagnosis_count
+procedure_count
+los_days
+icu_flag
+discharge_location
+```
+
+These features capture:
+
+* chronic disease severity
+* hospitalization complexity
+* treatment intensity
+
+---
+
+## Tier 3 — Physiologic Signals (Advanced)
+
+Future features derived from:
+
+* vital signs
+* laboratory results
+* medication data
+* temporal trends
+
+Examples:
+
+```text
+vital_sign_summary
+lab_summary
+medication_count
+lab_trend_features
+```
+
+---
+
+# Step 5 — Modeling Dataset
+
+After feature engineering, the final dataset is constructed.
+
+Example structure:
+
+| hadm_id | age | diagnosis_count | procedure_count | icu_flag | readmitted_30d |
+| ------- | --- | --------------- | --------------- | -------- | -------------- |
+
+Feature matrix and label vector:
+
+```python
+X = admissions[feature_columns]
+y = admissions["readmitted_30d"]
+```
+
+---
+
+# Step 6 — Model Training
+
+Models used for comparison:
+
+* Logistic Regression
+* Random Forest
+* XGBoost
+
+These models balance:
+
+* interpretability
+* nonlinear modeling capability
+* predictive performance
+
+---
+
+# Step 7 — Model Evaluation
+
+Performance metrics:
+
+* ROC-AUC
+* Precision / Recall
+* Feature importance
+* SHAP interpretation
+
+---
+
+# Key Design Principles
+
+### Admission-Level Aggregation
+
+All features are aggregated to:
+
+```text
+hadm_id
+```
+
+to maintain consistent modeling units.
+
+---
+
+### Leakage Prevention
+
+Features are constructed using only information **available during the admission**.
+
+Future events are excluded.
+
+---
+
+### Interpretability
+
+Feature design prioritizes **clinically interpretable variables**, allowing clinicians to understand the model predictions.
+
+---
+
+# Summary
+
+The pipeline follows a structured workflow:
+
+```text
+Cohort Selection
+        ↓
+Cohort Filtering (remove deaths)
+        ↓
+Readmission Labeling
+        ↓
+Feature Engineering
+        ↓
+Model Dataset Creation
+        ↓
+Model Training & Evaluation
+```
+
+This approach ensures a **clean, leakage-free, admission-level dataset suitable for hospital readmission prediction**.
+
+---
+
+Great — a **visual pipeline diagram** will make your GitHub project look much more professional and easier for reviewers (recruiters, hiring managers, or collaborators) to understand.
+
+Below is a **README-ready architecture diagram** plus a short explanation.
+
+---
+
+# Project Architecture
+
+## Readmission Prediction Pipeline
+
+```text
+                     MIMIC-IV Raw Tables
+ ┌──────────────────────────────────────────────────────────────┐
+ │                                                              │
+ │  admissions.csv        diagnoses_icd.csv     procedures_icd  │
+ │  patients.csv          icustays.csv          labevents.csv   │
+ │  chartevents.csv                                             │
+ │                                                              │
+ └──────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+                     Step 1 — Cohort Construction
+                 Define prediction unit = hospital admission
+                                │
+                                ▼
+                      Step 2 — Cohort Filtering
+             Remove admissions not eligible for prediction
+                       • in-hospital deaths
+                       • (optional) hospice discharge
+                       • (optional) pediatric patients
+                                │
+                                ▼
+                     Step 3 — Readmission Label
+               Determine if next admission occurs ≤ 30 days
+                                │
+                                ▼
+                    Step 4 — Feature Engineering
+            Aggregate clinical tables to admission-level
+                                │
+          ┌─────────────────────┼─────────────────────┐
+          ▼                     ▼                     ▼
+
+   Tier 1 Features        Tier 2 Features        Tier 3 Features
+   (Administrative)      (Clinical Burden)     (Physiologic Signals)
+
+   age                   diagnosis_count       vital summaries
+   gender                procedure_count       lab summaries
+   ethnicity             charlson_score        medication features
+   insurance             los_days              temporal trends
+   prior_admits          icu_flag
+                         discharge_location
+                                │
+                                ▼
+                     Step 5 — Modeling Dataset
+               Final admission-level feature table
+                                │
+                                ▼
+                         Feature Matrix
+                         X  (features)
+                         y  (readmission)
+                                │
+                                ▼
+                        Step 6 — Modeling
+             Logistic Regression | Random Forest | XGBoost
+                                │
+                                ▼
+                       Step 7 — Evaluation
+                     ROC-AUC | SHAP | Diagnostics
+```
+
+---
+
+# Feature Engineering Flow
+
+This diagram explains **how raw tables become features**.
+
+```text
+diagnoses_icd.csv
+        │
+        ▼
+ groupby(hadm_id)
+        │
+        ▼
+diagnosis_count
+        │
+        ▼
+merge → admissions cohort
+
+
+procedures_icd.csv
+        │
+        ▼
+ groupby(hadm_id)
+        │
+        ▼
+procedure_count
+        │
+        ▼
+merge → admissions cohort
+
+
+icustays.csv
+        │
+        ▼
+unique hadm_id
+        │
+        ▼
+icu_flag
+        │
+        ▼
+merge → admissions cohort
+```
+
+Final dataset:
+
+```text
+1 row = 1 hospital admission
+```
+
+---
+
+# Final Modeling Table Example
+
+| hadm_id | age | diagnosis_count | procedure_count | icu_flag | readmitted_30d |
+| ------- | --- | --------------- | --------------- | -------- | -------------- |
+| 20001   | 72  | 7               | 3               | 1        | 1              |
+| 20005   | 64  | 3               | 1               | 0        | 0              |
+| 20009   | 58  | 5               | 2               | 1        | 0              |
+
+---
+
+# Design Principles
+
+### Admission-Level Aggregation
+
+All features are computed at:
+
+```text
+hadm_id
+```
+
+because the prediction target is **readmission after a hospital admission**.
+
+---
+
+### Leakage Prevention
+
+Features are built using only information **available during the admission**, avoiding future information leakage.
+
+---
+
+### Interpretability
+
+The model uses clinically interpretable features such as:
+
+* comorbidity burden
+* care intensity
+* discharge disposition
+
+which allow clinicians to understand model predictions.
+
+---
+
+# Pipeline Summary
+
+```text
+Raw MIMIC Data
+        ↓
+Cohort Construction
+        ↓
+Remove In-Hospital Deaths
+        ↓
+Readmission Label Creation
+        ↓
+Feature Engineering (Tier 1 → Tier 2 → Tier 3)
+        ↓
+Model Training
+        ↓
+Evaluation & Interpretation
+```
+
+---
+
+💡 **Next improvement (very helpful for GitHub):**
+
+I can also give you a **much nicer diagram version used in research papers** like this:
+
+```
+Raw EHR → Cohort → Feature Store → ML Model → Evaluation
+```
+
+It looks **much cleaner and more “data science portfolio ready.”**
+
 ## Data Sources
 The analysis uses two core EHR tables:
 
