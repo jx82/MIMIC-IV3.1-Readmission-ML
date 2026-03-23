@@ -23,7 +23,7 @@ We first examined key variables:
 
 ```python
 cohort["discharge_location"].value_counts(dropna=False)
-
+```
 ---
 
 ## 🚫 Step 2 — Remove In-Hospital Deaths
