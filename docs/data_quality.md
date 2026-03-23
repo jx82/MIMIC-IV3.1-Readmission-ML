@@ -20,9 +20,11 @@ We first examined key variables:
 - admission timestamps  
 
 
+
 ```python
 cohort["discharge_location"].value_counts(dropna=False)
 
+```markdown
 ---
 
 ## 🚫 Step 2 — Remove In-Hospital Deaths
