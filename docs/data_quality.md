@@ -19,12 +19,9 @@ We first examined key variables:
 - `discharge_location`
 - admission timestamps  
 
+
 ```python
 cohort["discharge_location"].value_counts(dropna=False)
-Yes — and what I gave you is already Markdown, but I understand you want a **clean, copy-ready version with no extra formatting artifacts**.
-
-👉 Below is a **pure Markdown file** (no IDs, no extra annotations).
-You can copy **everything exactly** into `docs/data_quality.md`.
 
 ---
 
