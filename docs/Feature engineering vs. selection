@@ -1,39 +1,69 @@
-# Feature Engineering vs Feature Selection  
-## Example: Medication Complexity (Tier 3 Features)
+# Feature Engineering vs. Feature Selection
+## Example: Medication Complexity in Tier 3 Readmission Modeling
 
 ---
 
-## 🧠 Key Concept
+## 1. Key Idea
 
-**Feature Engineering ≠ Feature Selection**
+**Feature engineering** and **feature selection** are related, but they are not the same step.
 
-These are two distinct steps in a machine learning pipeline:
+### Feature engineering
+Feature engineering means creating useful candidate variables from raw data.
 
-- **Feature Engineering** → Create candidate signals from raw data  
-- **Feature Selection** → Choose which signals to use in the final model  
+### Feature selection
+Feature selection means deciding which of those candidate variables should be included in the final prediction model.
 
----
-
-## 🏥 Context: Medication Complexity
-
-In this project, medication-related features are engineered from the MIMIC-IV `prescriptions` table to capture **treatment complexity during hospitalization**.
-
-We created three related features:
-
-| Feature | Description |
-|--------|------------|
-| `medication_count` | Total number of prescriptions during admission |
-| `unique_drug_count` | Number of distinct drugs |
-| `polypharmacy_flag` | Indicator for ≥5 unique drugs |
+In practice, a data scientist often engineers several variables that represent the same clinical concept, then uses model comparison, correlation checks, and interpretability considerations to decide which one to keep.
 
 ---
 
-## ⚙️ Feature Engineering Step
+## 2. Example: Medication Complexity
 
-During feature engineering, we intentionally created **multiple representations of the same clinical concept**.
+In this project, medication-related Tier 3 features were engineered from the `prescriptions` table to capture **treatment complexity during the index admission**.
+
+Three related features were created:
+
+| Feature | Definition | Clinical meaning |
+|---|---|---|
+| `medication_count` | Total number of prescription records during admission | Overall treatment volume |
+| `unique_drug_count` | Number of distinct drugs during admission | Medication diversity / complexity |
+| `polypharmacy_flag` | Indicator for 5 or more unique drugs | Threshold-based high medication burden |
+
+These three variables are all clinically reasonable, but they are not equally useful in a final model.
+
+---
+
+## 3. Why Engineer All Three First?
+
+At the feature engineering stage, the goal is to create **multiple candidate representations** of an important concept.
+
+For medication complexity, the concept can be represented in different ways:
+
+- `medication_count` captures how many medication orders appeared in the admission
+- `unique_drug_count` captures how many different drugs the patient was exposed to
+- `polypharmacy_flag` captures whether the patient crossed a clinically meaningful threshold
+
+This is useful because different representations may behave differently in modeling:
+
+- one may be more predictive
+- one may be more stable
+- one may be easier to explain to clinicians
+- one may work better in logistic regression, while another may work better in tree-based models
+
+So at this stage, the project intentionally keeps all reasonable candidates.
+
+---
+
+## 4. Why Feature Selection Comes Later
+
+After features are engineered, the next task is to decide which variables should actually enter the final model.
+
+This matters because these three medication variables are related:
+
+- `polypharmacy_flag` is directly derived from `unique_drug_count`
+- `medication_count` and `unique_drug_count` are also likely to be strongly correlated
+
+For example:
 
 ```text
-Medication complexity →
-    ├── medication_count        (volume)
-    ├── unique_drug_count       (diversity)
-    └── polypharmacy_flag       (threshold-based risk)
+polypharmacy_flag = 1 if unique_drug_count >= 5
