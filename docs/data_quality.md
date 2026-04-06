@@ -223,3 +223,42 @@ Robust validation ensures models are both **accurate and clinically meaningful**
 ```
 
 ---
+# Feature Engineering vs Feature Selection  
+## Example: Medication Complexity (Tier 3 Features)
+
+---
+
+## 🧠 Key Concept
+
+**Feature Engineering ≠ Feature Selection**
+
+These are two distinct steps in a machine learning pipeline:
+
+- **Feature Engineering** → Create candidate signals from raw data  
+- **Feature Selection** → Choose which signals to use in the final model  
+
+---
+
+## 🏥 Context: Medication Complexity
+
+In this project, medication-related features are engineered from the MIMIC-IV `prescriptions` table to capture **treatment complexity during hospitalization**.
+
+We created three related features:
+
+| Feature | Description |
+|--------|------------|
+| `medication_count` | Total number of prescriptions during admission |
+| `unique_drug_count` | Number of distinct drugs |
+| `polypharmacy_flag` | Indicator for ≥5 unique drugs |
+
+---
+
+## ⚙️ Feature Engineering Step
+
+During feature engineering, we intentionally created **multiple representations of the same clinical concept**.
+
+```text
+Medication complexity →
+    ├── medication_count        (volume)
+    ├── unique_drug_count       (diversity)
+    └── polypharmacy_flag       (threshold-based risk)
