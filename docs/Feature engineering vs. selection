@@ -1,6 +1,4 @@
-Yes — the formatting in GitHub looks off because some of the markdown/code fencing is not rendering the way you want.
 
-Here is a cleaner **GitHub-ready markdown version** with a more detailed **model comparison interpretation** section you can paste into your doc.
 
 ````markdown
 # Feature Engineering vs. Feature Selection
