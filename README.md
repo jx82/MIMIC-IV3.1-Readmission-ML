@@ -1424,10 +1424,6 @@ This structure ensures consistent data alignment, avoids duplicated records, and
 
 ---
 
-If you'd like, I can also give you a **very nice README diagram for your whole MIMIC project pipeline** (cohort → Tier1 → Tier2 → Tier3 → modeling). It will make your GitHub project look **very polished and professional**.
-Below is a GitHub-ready note you can paste into `docs/missing_data_strategy.md` or your notebook markdown.
-
-````markdown
 # Missing Data Strategy for Physiologic Features
 
 ## 1. Why Missing Data Matters in This Project
@@ -1708,5 +1704,4 @@ This approach preserves sample size, avoids excluding non-ICU patients, reduces 
 
 ```
 
-Your screenshot shows exactly this kind of Tier 3 chart-event missingness problem, especially with SpO2/vital features, so this note fits your current project documentation well. :contentReference[oaicite:0]{index=0}
-```
+
