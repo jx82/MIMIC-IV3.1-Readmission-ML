@@ -1702,6 +1702,187 @@ Median imputation is used only to make the dataset usable for machine learning m
 
 This approach preserves sample size, avoids excluding non-ICU patients, reduces bias, and supports fair comparison across logistic regression, decision tree, random forest, and XGBoost models.
 
-```
+---
 
+# ============================================================
+# Step 4 Summary: Master Feature Dataset Completed
+# ============================================================
 
+## Purpose
+
+By the end of Step 4, we created the master admission-level feature dataset for readmission modeling.
+
+Each row represents one hospital admission (`hadm_id`), with patient identifier (`subject_id`) retained for subject-level splitting.
+
+This dataset includes:
+
+- Tier 1 administrative baseline features
+- Tier 2 clinical burden and care intensity features
+- Tier 3 lab, vital sign, and medication features
+- the target outcome: `label_readmit_30d`
+- audit variables used to validate label creation
+
+---
+
+## Important Modeling Rule
+
+The Step 4 dataset is NOT yet the final machine learning matrix.
+
+It is a master modeling table used for:
+
+- validation
+- audit trail
+- reproducibility
+- subject-level train / validation / test split
+- later error analysis
+
+Therefore, we keep key identifiers and audit variables in Step 4.
+
+---
+
+## Variables Kept in Step 4 But Excluded From Modeling
+
+The following variables are kept in the Step 4 master dataset but must NOT be used as model predictors:
+
+### Identifiers
+
+- `subject_id`
+- `hadm_id`
+
+Reason:
+
+These are needed for splitting and tracing admissions, but should not be learned by the model.
+
+### Label construction / leakage variables
+
+- `next_admittime`
+- `days_to_next_admit`
+
+Reason:
+
+These variables were used to create `label_readmit_30d`.
+
+They contain future information and would create target leakage if used as predictors.
+
+### Raw timestamp variables
+
+- `admittime`
+- `dischtime`
+- `edregtime`
+- `edouttime`
+- `deathtime`
+
+Reason:
+
+Raw datetime values are not directly used in modeling.
+
+If needed, they should first be converted into derived features such as weekend admission, night admission, or ED length of stay.
+
+### Cohort audit variables
+
+- `hospital_expire_flag`
+- `hospice_flag`
+
+Reason:
+
+These were used for cohort validation / exclusion logic and should not be used as predictors in the final model.
+
+### Raw categorical variables replaced by grouped versions
+
+- `race`
+- `insurance`
+- `admission_type`
+- `discharge_location`
+
+Reason:
+
+Grouped versions are more stable and modeling-friendly:
+
+- `race_grouped`
+- `insurance_grouped`
+- `admission_type_grouped`
+- `discharge_group`
+
+---
+
+## Tier 3 Missingness Strategy
+
+Lab and vital sign variables were aggregated to admission level using summary statistics such as:
+
+- minimum
+- maximum
+- mean
+- last value
+
+Example:
+
+- `creatinine_min`
+- `creatinine_max`
+- `creatinine_mean`
+- `creatinine_last`
+
+Chart-event variables such as SpO2 may have high missingness because they are often collected mainly for ICU or closely monitored patients.
+
+Therefore, missingness is treated as clinically informative rather than only as a data quality problem.
+
+Missingness flags such as:
+
+- `spo2_missing_flag`
+- `heart_rate_missing_flag`
+- `resp_rate_missing_flag`
+
+are retained as model features.
+
+Median imputation should be done later in Step 5, after train / validation / test splitting, using the training set only.
+
+---
+
+## Why Imputation Happens in Step 5
+
+Imputation should not be fit on the full Step 4 dataset.
+
+If we calculate medians before splitting, then validation and test patients influence preprocessing.
+
+That would create preprocessing leakage.
+
+Correct logic:
+
+1. Split the data by `subject_id`
+2. Fit imputation values on `X_train` only
+3. Apply the same imputation values to `X_val` and `X_test`
+
+This simulates real-world deployment, where future patients are not available when the model is trained.
+
+---
+
+## Step 4 Output
+
+The Step 4 output should be saved as a complete master feature table.
+
+This table should still include:
+
+- `subject_id`
+- `hadm_id`
+- `label_readmit_30d`
+- `next_admittime`
+- `days_to_next_admit`
+
+These variables are useful for audit and reproducibility, but will be excluded from `X` in Step 5.
+
+---
+
+## Transition to Step 5
+
+In Step 5, we will:
+
+1. Load the Step 4 master dataset
+2. Split admissions by `subject_id`
+3. Separate predictors `X` from target `y`
+4. Exclude identifiers and leakage variables
+5. Fit preprocessing using training data only
+6. Train baseline models:
+   - Logistic Regression
+   - Decision Tree
+   - Random Forest
+   - XGBoost
+7. Evaluate models on validation and test sets
