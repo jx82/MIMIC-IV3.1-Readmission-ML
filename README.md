@@ -1425,3 +1425,288 @@ This structure ensures consistent data alignment, avoids duplicated records, and
 ---
 
 If you'd like, I can also give you a **very nice README diagram for your whole MIMIC project pipeline** (cohort → Tier1 → Tier2 → Tier3 → modeling). It will make your GitHub project look **very polished and professional**.
+Below is a GitHub-ready note you can paste into `docs/missing_data_strategy.md` or your notebook markdown.
+
+````markdown
+# Missing Data Strategy for Physiologic Features
+
+## 1. Why Missing Data Matters in This Project
+
+In this readmission prediction project, some Tier 3 physiologic variables such as SpO2, heart rate, respiratory rate, and blood pressure are derived from `chartevents`.
+
+These variables may have high missingness because chart-event monitoring is not equally available for all admissions. For example, SpO2 values are often collected mainly for ICU or closely monitored patients. Therefore, missingness is not always a random data quality problem. It may reflect a real clinical process:
+
+> Patients without charted SpO2 values may be non-ICU or lower-acuity patients who were not continuously monitored.
+
+This type of missingness is called **informative missingness**.
+
+---
+
+## 2. Why We Do Not Drop Missing Rows
+
+A simple approach would be:
+
+```python
+cohort = cohort.dropna()
+````
+
+However, this is not appropriate here because SpO2 and other chart-event variables may be missing for a large portion of admissions.
+
+Dropping rows with missing physiologic values would:
+
+* remove many non-ICU patients
+* reduce sample size dramatically
+* bias the dataset toward ICU patients
+* make the final model less representative of hospital admissions
+
+Therefore, we keep these patients and handle missingness explicitly.
+
+---
+
+## 3. Why We Use Imputation
+
+Many machine learning models cannot accept missing values directly.
+
+For example:
+
+| Model                                    | Can Handle NaN Directly? | Need Imputation? |
+| ---------------------------------------- | -----------------------: | ---------------: |
+| Logistic Regression                      |                       No |              Yes |
+| Decision Tree / Random Forest in sklearn |               Usually no |              Yes |
+| XGBoost                                  |                      Yes |         Optional |
+
+For logistic regression, decision tree, and random forest, missing values must be filled before modeling.
+
+Median imputation is commonly used because it is simple, stable, and less sensitive to outliers than mean imputation.
+
+Example:
+
+```python
+median_spo2 = X_train["spo2_mean"].median()
+
+X_train["spo2_mean"] = X_train["spo2_mean"].fillna(median_spo2)
+X_val["spo2_mean"] = X_val["spo2_mean"].fillna(median_spo2)
+X_test["spo2_mean"] = X_test["spo2_mean"].fillna(median_spo2)
+```
+
+---
+
+## 4. Why Median Imputation Alone Is Not Enough
+
+Median imputation alone can be misleading.
+
+If SpO2 is mostly observed among ICU patients, then the median SpO2 comes mainly from monitored patients. Filling non-ICU missing values with the ICU median does not mean those patients truly had that oxygen saturation.
+
+Therefore, the imputed value should be interpreted as a **computational placeholder**, not as a real measured value.
+
+---
+
+## 5. Why We Add Missingness Flags
+
+To preserve the information contained in missingness, we create missing indicators before imputation.
+
+Example:
+
+```python
+X_train["spo2_mean_missing"] = X_train["spo2_mean"].isna().astype(int)
+X_val["spo2_mean_missing"] = X_val["spo2_mean"].isna().astype(int)
+X_test["spo2_mean_missing"] = X_test["spo2_mean"].isna().astype(int)
+```
+
+Then we impute the numeric value.
+
+This allows the model to distinguish between:
+
+| Patient Type                      | SpO2 Value | Missing Flag | Meaning                      |
+| --------------------------------- | ---------: | -----------: | ---------------------------- |
+| ICU patient with real SpO2        |         89 |            0 | true low oxygen saturation   |
+| ICU patient with normal SpO2      |         96 |            0 | true measured normal value   |
+| non-ICU patient with missing SpO2 | 96 imputed |            1 | value was not truly measured |
+
+The missing flag tells the model:
+
+> This value was imputed, not observed.
+
+This is especially important in healthcare data because missingness may reflect clinical decisions, monitoring intensity, or illness severity.
+
+---
+
+## 6. Difference Across Models
+
+### Logistic Regression
+
+Logistic regression cannot handle missing values directly. It also assumes a mostly linear relationship between features and outcome.
+
+Therefore, for logistic regression we need:
+
+* median imputation
+* missingness flags
+* optional clinically meaningful interaction terms
+
+Example:
+
+```python
+spo2_mean
+spo2_mean_missing
+icu_flag
+icu_flag * spo2_mean
+```
+
+The missing flag helps logistic regression separate patients with real SpO2 values from patients whose values were imputed.
+
+---
+
+### Decision Tree and Random Forest
+
+Scikit-learn decision trees and random forests usually require complete numeric input, so imputation is still needed.
+
+Tree models can learn nonlinear relationships and interactions more naturally than logistic regression, but missing flags are still useful because they preserve information about whether the value was originally observed.
+
+Recommended approach:
+
+* median imputation
+* missingness flags
+* usually no need for manual interaction terms
+
+---
+
+### XGBoost
+
+XGBoost can handle missing values internally. It can learn a default direction for missing values during tree splitting.
+
+Therefore, XGBoost does not strictly require median imputation.
+
+However, for this project, we may still use the same imputed dataset with missingness flags for all models to make model comparison cleaner.
+
+Using the same preprocessing pipeline helps ensure that performance differences are due to model structure, not different missing-data handling.
+
+---
+
+## 7. When to Create Missing Flags
+
+Missing flags can be created before or after splitting because they are row-level transformations.
+
+Safe before split:
+
+```python
+cohort["spo2_mean_missing"] = cohort["spo2_mean"].isna().astype(int)
+```
+
+This does not use information from other patients.
+
+---
+
+## 8. When to Impute Missing Values
+
+Imputation should be done **after train / validation / test split**.
+
+The imputation value should be learned from the training data only.
+
+Correct workflow:
+
+```python
+median_spo2 = X_train["spo2_mean"].median()
+
+X_train["spo2_mean"] = X_train["spo2_mean"].fillna(median_spo2)
+X_val["spo2_mean"] = X_val["spo2_mean"].fillna(median_spo2)
+X_test["spo2_mean"] = X_test["spo2_mean"].fillna(median_spo2)
+```
+
+Incorrect workflow:
+
+```python
+median_spo2 = cohort["spo2_mean"].median()
+cohort["spo2_mean"] = cohort["spo2_mean"].fillna(median_spo2)
+```
+
+This is incorrect because it uses validation and test data to calculate the median, which creates preprocessing leakage.
+
+---
+
+## 9. Why Imputation After Split Prevents Leakage
+
+The test set represents future unseen patients.
+
+If we calculate the median using the full dataset before splitting, then the training process indirectly uses information from validation and test patients.
+
+This violates the real-world prediction setting.
+
+In production, the hospital would only have historical training data available when building the model. Future patients should not influence preprocessing decisions.
+
+Therefore:
+
+> Any transformation that learns a population-level statistic must be fit on the training set only.
+
+Examples include:
+
+* median imputation
+* mean imputation
+* standardization
+* normalization
+* PCA
+* SMOTE
+* feature selection
+
+---
+
+## 10. Recommended Strategy for This Project
+
+For Tier 3 physiologic variables, this project uses the following strategy:
+
+1. Create missingness flags for variables with meaningful missingness.
+2. Split the data into train, validation, and test sets at the subject level.
+3. Fit median imputation using the training set only.
+4. Apply the same imputation values to validation and test sets.
+5. Use the processed data for logistic regression, decision tree, random forest, and XGBoost.
+6. Document missingness as clinically informative rather than purely random.
+
+---
+
+## 11. Example Code
+
+```python
+# ------------------------------------------------------------
+# Missing Data Strategy for Physiologic Features
+# ------------------------------------------------------------
+
+physio_cols = [
+    "spo2_mean",
+    "spo2_min",
+    "heart_rate_mean",
+    "resp_rate_mean",
+    "sbp_min"
+]
+
+# 1. Create missingness flags
+for col in physio_cols:
+    X_train[f"{col}_missing"] = X_train[col].isna().astype(int)
+    X_val[f"{col}_missing"] = X_val[col].isna().astype(int)
+    X_test[f"{col}_missing"] = X_test[col].isna().astype(int)
+
+# 2. Fit imputation values on training data only
+imputation_values = {}
+
+for col in physio_cols:
+    imputation_values[col] = X_train[col].median()
+
+# 3. Apply training-set medians to train, validation, and test
+for col in physio_cols:
+    X_train[col] = X_train[col].fillna(imputation_values[col])
+    X_val[col] = X_val[col].fillna(imputation_values[col])
+    X_test[col] = X_test[col].fillna(imputation_values[col])
+```
+
+---
+
+## 12. Project Interpretation
+
+In this project, missing physiologic values are treated as clinically meaningful. For ICU-related chart-event variables, missingness may indicate that the patient was not in an ICU or did not require intensive monitoring.
+
+Median imputation is used only to make the dataset usable for machine learning models. Missingness flags are added so that the model can distinguish observed physiologic values from imputed placeholders.
+
+This approach preserves sample size, avoids excluding non-ICU patients, reduces bias, and supports fair comparison across logistic regression, decision tree, random forest, and XGBoost models.
+
+```
+
+Your screenshot shows exactly this kind of Tier 3 chart-event missingness problem, especially with SpO2/vital features, so this note fits your current project documentation well. :contentReference[oaicite:0]{index=0}
+```
