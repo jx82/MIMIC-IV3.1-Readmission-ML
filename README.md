@@ -1886,3 +1886,306 @@ In Step 5, we will:
    - Random Forest
    - XGBoost
 7. Evaluate models on validation and test sets
+
+
+# Step 5 — Modeling Data Preparation & Leakage Prevention
+
+This step prepares the final feature-engineered cohort for machine learning modeling while ensuring **strict leakage prevention**.
+
+In healthcare prediction tasks, avoiding data leakage is critical because the goal is to simulate **real-world prediction at discharge time**. Any information unavailable at discharge must be excluded from model training.
+
+---
+
+# Why Leakage Awareness Matters
+
+In a hospital setting, the model is expected to answer:
+
+> **“At discharge, what is this patient's risk of readmission within 30 days?”**
+
+Therefore, the model can only use information that is known **on or before discharge**.
+
+If future information accidentally enters the model, performance becomes artificially inflated and clinically unrealistic.
+
+For example:
+
+❌ Wrong approach:
+
+Using the patient's **future admission date** to predict readmission.
+
+```python
+days_to_next_admit
+```
+
+This variable directly contains the answer.
+
+A model trained with this feature would appear highly accurate but would fail in production because hospitals do not know future admissions.
+
+---
+
+# Leakage Prevention Principle
+
+A feature is considered **leakage** if it:
+
+- occurs **after discharge**
+- contains **future information**
+- is directly involved in **outcome creation**
+- would be unavailable in a real hospital workflow
+
+Our project follows a strict rule:
+
+> **Only information available at or before discharge may enter the model.**
+
+---
+
+# Step 5 Pipeline Overview
+
+The following workflow was used to prepare modeling datasets.
+
+```text
+Step 4 Final Features
+        ↓
+Step 5A Load Dataset
+        ↓
+Step 5B Remove Leakage Variables
+        ↓
+Step 5C Define Target (Y)
+        ↓
+Step 5D Subject-Level Split
+        ↓
+Step 5E Final Predictor Cleanup
+        ↓
+Step 5F Feature Type Identification
+        ↓
+Step 5G Missing Value Imputation
+        ↓
+Step 5H Categorical Encoding
+        ↓
+Step 5I Scaling (Optional)
+        ↓
+Step 5J Preprocessing Pipeline
+        ↓
+Step 5K Save Modeling Datasets
+```
+
+---
+
+# Step 5B — Remove Leakage Variables
+
+## Purpose
+
+Remove variables containing **future information** or unavailable at discharge.
+
+These variables are excluded **before modeling begins**.
+
+### Variables Removed
+
+| Variable | Why Dropped |
+|----------|--------------|
+| `next_admittime` | Future hospital admission |
+| `next_hadm_id` | Future admission identifier |
+| `days_to_next_admit` | Directly derived from outcome |
+| `next_admission_type` | Future hospitalization context |
+| `deathtime` | Post-discharge event |
+
+### Why `deathtime` Was Dropped
+
+`deathtime` is mostly missing in MIMIC-IV because only deceased patients have a value.
+
+Since our cohort excludes in-hospital deaths:
+
+```python
+hospital_expire_flag == 0
+```
+
+Nearly all values are missing by design.
+
+Additionally, death time would not be known at discharge, making it inappropriate for prediction.
+
+---
+
+# Step 5C — Define Outcome Variable
+
+The prediction target is:
+
+```python
+label_readmit_30d
+```
+
+Definition:
+
+```text
+1 = readmitted within 30 days
+0 = no readmission within 30 days
+```
+
+This variable remains in the dataset until final feature matrix creation.
+
+---
+
+# Step 5D — Subject-Level Split (Leakage Prevention)
+
+## Why Subject-Level Splitting Matters
+
+Patients in MIMIC-IV may have **multiple admissions**.
+
+If admission rows are randomly split:
+
+```text
+Patient A Admission 1 → Training
+Patient A Admission 2 → Test
+```
+
+The model indirectly sees the same patient in both datasets.
+
+This creates **patient leakage**.
+
+### Correct Approach
+
+We split using:
+
+```python
+subject_id
+```
+
+via:
+
+```python
+GroupShuffleSplit()
+```
+
+This guarantees:
+
+> **No patient appears in both training and test datasets.**
+
+This design better simulates real-world deployment.
+
+---
+
+# Step 5E — Final Predictor Cleanup
+
+After splitting is complete, we create the final predictor matrix (**X**).
+
+## Variables Removed in Step 5E
+
+### IDs
+
+Removed because they uniquely identify patients rather than represent clinical information.
+
+```python
+subject_id
+hadm_id
+```
+
+---
+
+### Outcome Variable
+
+Removed from predictors to prevent target leakage.
+
+```python
+label_readmit_30d
+```
+
+---
+
+### Administrative / Timestamp Variables
+
+These are useful for auditing but not meaningful predictors.
+
+```python
+admittime
+dischtime
+edregtime
+edouttime
+admit_provider_id
+hospital_expire_flag
+```
+
+---
+
+### Raw Duplicate Variables
+
+Raw variables are removed **only if engineered versions exist**.
+
+Example:
+
+```python
+race → removed
+race_grouped → retained
+```
+
+```python
+insurance → removed
+insurance_grouped → retained
+```
+
+```python
+discharge_location → removed
+discharge_location_clean → removed
+discharge_grouped → retained
+```
+
+Why?
+
+Grouped variables:
+
+- reduce sparsity
+- improve interpretability
+- simplify modeling
+- better reflect production healthcare analytics workflows
+
+---
+
+# Practical Rule Used in This Project
+
+### Step 5B
+
+**Prevent cheating**
+
+Remove future information.
+
+---
+
+### Step 5E
+
+**Clean the predictor set**
+
+Remove IDs, timestamps, targets, and redundant variables.
+
+---
+
+# Final Modeling Dataset
+
+After Step 5:
+
+### Features (X)
+
+Administrative + clinical + physiologic variables available at discharge.
+
+### Target (Y)
+
+```python
+label_readmit_30d
+```
+
+### Final Split
+
+- **Training set**
+- **Validation set**
+- **Test set**
+
+using **patient-level separation**.
+
+This creates a clinically realistic and leakage-safe modeling framework.
+
+---
+
+## Key Takeaway
+
+A high-performing healthcare model is not useful if it relies on future information.
+
+In this project:
+
+> **Predictive realism was prioritized over artificially inflated performance.**
+
+The model only uses information that would realistically be available to clinicians **at discharge time**.
