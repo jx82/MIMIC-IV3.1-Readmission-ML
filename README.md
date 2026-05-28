@@ -2999,3 +2999,257 @@ with evaluation using:
 * threshold optimization
 * confusion matrix analysis
 * SHAP interpretation
+
+## Project Data Organization & Workflow
+
+To improve **reproducibility, modularity, and GitHub readability**, the project organizes datasets according to the machine learning lifecycle.
+
+This structure separates:
+
+* raw source data
+* engineered features
+* modeling-ready datasets
+* model outputs
+
+The organization mirrors how production healthcare ML pipelines are commonly structured.
+
+---
+
+# Project Folder Structure
+
+```text
+data/
+│
+├── raw/
+│   ├── admissions.csv
+│   ├── patients.csv
+│   ├── diagnoses_icd.csv
+│   ├── procedures_icd.csv
+│   ├── labevents.csv
+│   ├── chartevents.csv
+│   └── other original MIMIC-IV source files
+│
+├── features/
+│   ├── mimic_readmission_features.csv
+│   └── mimic_readmission_features.parquet
+│
+├── processed/
+│   ├── mimic_readmission_X_train.csv
+│   ├── mimic_readmission_X_val.csv
+│   ├── mimic_readmission_X_test.csv
+│   ├── mimic_readmission_y_train.csv
+│   ├── mimic_readmission_y_val.csv
+│   └── mimic_readmission_y_test.csv
+│
+└── outputs/
+    ├── model_results/
+    ├── roc_curves/
+    ├── confusion_matrix/
+    ├── shap/
+    └── threshold_analysis/
+```
+
+---
+
+# Folder Purpose
+
+## `raw/`
+
+Stores **untouched original MIMIC-IV source files**.
+
+Examples:
+
+```text
+admissions.csv
+patients.csv
+diagnoses_icd.csv
+labevents.csv
+chartevents.csv
+```
+
+### Purpose
+
+Acts as the **source of truth** for the project.
+
+### Rules
+
+* never modify raw files
+* read-only input source
+* used for reproducibility
+
+Think of this folder as:
+
+> **Original clinical data source**
+
+---
+
+## `features/`
+
+Stores **master feature-engineered datasets** produced after feature engineering.
+
+Examples:
+
+```text
+mimic_readmission_features.csv
+mimic_readmission_features.parquet
+```
+
+### Generated In
+
+```text
+Step 4 — Feature Engineering
+```
+
+### Characteristics
+
+* one master cohort dataset
+* contains engineered predictors
+* includes target label
+* before train/validation/test split
+* before preprocessing
+
+Think of this folder as:
+
+> **Research-ready feature table**
+
+---
+
+## `processed/`
+
+Stores **machine-learning-ready datasets**.
+
+Examples:
+
+```text
+mimic_readmission_X_train.csv
+mimic_readmission_X_val.csv
+mimic_readmission_X_test.csv
+
+mimic_readmission_y_train.csv
+mimic_readmission_y_val.csv
+mimic_readmission_y_test.csv
+```
+
+### Generated In
+
+```text
+Step 5 — Modeling Dataset Preparation
+```
+
+### Characteristics
+
+* leakage-safe
+* subject-level split
+* train / validation / test datasets
+* ready for modeling
+* not yet imputed, scaled, or encoded
+
+Preprocessing is intentionally deferred to:
+
+```text
+Step 6 — Modeling Pipeline
+```
+
+where transformations occur safely inside sklearn pipelines.
+
+Think of this folder as:
+
+> **Model-ready inputs**
+
+---
+
+## `outputs/`
+
+Stores **modeling artifacts and evaluation results**.
+
+Examples:
+
+```text
+ROC curves
+confusion matrices
+feature importance plots
+SHAP visualizations
+threshold analysis
+performance comparison tables
+```
+
+### Generated In
+
+```text
+Step 6+ — Model Development & Evaluation
+```
+
+Think of this folder as:
+
+> **Final modeling results**
+
+---
+
+# End-to-End Workflow
+
+The overall project follows the workflow below:
+
+```text
+raw MIMIC-IV tables
+        ↓
+Step 1 — Load Data
+        ↓
+Step 2 — Cohort Definition
+        ↓
+Step 3 — Label Creation
+        ↓
+Step 4 — Feature Engineering
+        ↓
+features/
+(mimic_readmission_features.csv)
+        ↓
+Step 5 — Modeling Dataset Preparation
+        ↓
+processed/
+(X_train, X_val, X_test)
+(y_train, y_val, y_test)
+        ↓
+Step 6 — Modeling Pipeline
+(imputation + encoding + scaling)
+        ↓
+Logistic Regression
+Random Forest
+XGBoost
+        ↓
+outputs/
+(ROC-AUC, SHAP, threshold tuning, evaluation)
+```
+
+---
+
+# Why This Structure?
+
+This organization improves:
+
+### Reproducibility
+
+Each project stage has a clearly defined output.
+
+### Modularity
+
+Step 6 can begin directly from Step 5 outputs without rerunning earlier notebooks.
+
+### Debugging
+
+Issues can be traced to the exact project stage.
+
+### Fair Model Comparison
+
+All models share the same leakage-safe train/validation/test split.
+
+### Professional Portfolio Quality
+
+The structure closely resembles real-world healthcare machine learning workflows used in:
+
+* hospital analytics teams
+* payer analytics
+* health tech companies
+* clinical AI development teams
+
+This separation makes the project easier to maintain, reproduce, and explain to future employers or collaborators.
+
