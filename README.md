@@ -3253,3 +3253,248 @@ The structure closely resembles real-world healthcare machine learning workflows
 
 This separation makes the project easier to maintain, reproduce, and explain to future employers or collaborators.
 
+## Step 6 Design Note — Why Preprocessing Belongs Inside the Modeling Pipeline
+
+### 1. What Transformers Do
+
+In Step 6, preprocessing is handled by **transformers**. A transformer is a reusable object that learns a rule from the training data and then applies that same rule to training, validation, and test data.
+
+Examples:
+
+```text
+SimpleImputer     → handles missing values
+OneHotEncoder     → converts categorical variables into numeric columns
+StandardScaler    → scales numeric variables
+ColumnTransformer → applies different preprocessing rules to different feature groups
+```
+
+For this project, preprocessing will be organized by feature type:
+
+```text
+Numeric features
+→ median imputation
+→ scaling for Logistic Regression
+
+Categorical features
+→ fill missing values with "Unknown"
+→ one-hot encoding
+
+Binary features
+→ pass through unchanged or simple imputation if needed
+```
+
+This allows each variable type to receive the correct preprocessing treatment.
+
+---
+
+### 2. Why Use Pipelines Instead of Preprocessing in Step 5?
+
+Step 5 is used to **prepare and define** the modeling dataset.
+
+Step 6 is where preprocessing is actually executed inside the model pipeline.
+
+This separation is intentional.
+
+#### Step 5
+
+```text
+Split data
+Identify feature types
+Design missing value strategy
+Prepare X_train, X_val, X_test
+```
+
+#### Step 6
+
+```text
+Fit preprocessing on X_train only
+Transform X_train, X_val, X_test consistently
+Train models
+Evaluate performance
+```
+
+A pipeline combines preprocessing and modeling into one workflow:
+
+```text
+Raw X
+→ imputation
+→ encoding
+→ scaling
+→ model
+→ prediction
+```
+
+This is preferred because it:
+
+* prevents data leakage
+* keeps preprocessing consistent across models
+* improves reproducibility
+* supports fair comparison between Logistic Regression, Random Forest, and XGBoost
+* works correctly with cross-validation and grid search
+* reduces human error from manually transforming datasets
+
+Without a pipeline, it is easy to accidentally use different preprocessing rules for different models. For example, Logistic Regression might receive scaled data, while Random Forest might receive differently imputed data. Then model performance would no longer be directly comparable.
+
+With a pipeline, the same preprocessing recipe is reused across models, and only the model itself changes.
+
+---
+
+### 3. Missing Value Strategy in This Project
+
+Healthcare data often contain missing values for meaningful reasons.
+
+In this readmission project, missingness can occur because:
+
+* a lab was not ordered
+* a patient was not in the ICU
+* a vital sign was not charted
+* a variable comes from a source table with partial coverage
+* a patient was clinically stable enough not to need certain measurements
+
+Therefore, missingness is not always random. It may contain clinical information.
+
+For example:
+
+```text
+Missing ICU vitals
+```
+
+may suggest:
+
+```text
+Patient was likely not ICU-level severity
+```
+
+So the project should not automatically drop high-missing variables. Instead, the preferred strategy is:
+
+```text
+Impute missing values
++
+retain missingness indicators when available
+```
+
+This lets the model learn both:
+
+```text
+the imputed value
+```
+
+and
+
+```text
+whether the value was originally missing
+```
+
+---
+
+### 4. Why Use Training Median for Validation and Test?
+
+For numeric variables, the planned strategy is:
+
+```text
+Fit median imputer on X_train only
+Apply the same median to X_train, X_val, and X_test
+```
+
+This means validation and test data do **not** calculate their own medians.
+
+The assumption is:
+
+> The training dataset represents the information available at model development time.
+
+In real-world deployment, future patients arrive after the model is trained. We would not know the future population’s median creatinine, WBC, LOS, or other values ahead of time.
+
+So validation and test sets should simulate future patients:
+
+```text
+Train data = historical data used to build model
+Validation/test data = unseen future-like patients
+```
+
+Using validation/test medians would leak information from those datasets into preprocessing and make performance estimates too optimistic.
+
+---
+
+### 5. What If Validation/Test Distributions Are Different?
+
+Validation and test distributions may differ from training. This is expected in healthcare.
+
+Differences may occur because of:
+
+* population drift
+* seasonal illness patterns
+* different ICU mix
+* changing clinical practice
+* different missingness patterns
+* random sampling variation
+
+This is not a reason to use validation/test medians. Instead, it is exactly why validation and test evaluation are important.
+
+If the model performs well despite distribution differences, it suggests stronger generalization.
+
+If performance drops, it may indicate:
+
+```text
+distribution shift
+overfitting
+unstable predictors
+changed missingness patterns
+poor calibration
+```
+
+---
+
+### 6. What ROC-AUC Tells Us Here
+
+ROC-AUC evaluates whether the model can correctly **rank** patients by readmission risk.
+
+It asks:
+
+> Are readmitted patients generally assigned higher predicted risk than non-readmitted patients?
+
+ROC-AUC is useful when validation/test distributions differ because it focuses on ranking rather than exact predicted probability calibration.
+
+Example:
+
+```text
+Patient A: not readmitted → predicted risk 0.20
+Patient B: readmitted     → predicted risk 0.70
+```
+
+This is a correct ranking.
+
+If the validation/test population is sicker overall, predicted probabilities may shift upward. ROC-AUC can still show whether the model preserves correct risk ordering.
+
+However, ROC-AUC does not fully answer operational questions. A model may rank patients reasonably well but still have poorly calibrated probabilities or weak performance at a specific threshold.
+
+Therefore, Step 6 should also evaluate:
+
+```text
+PR-AUC
+confusion matrix
+precision
+recall
+threshold performance
+top-risk capture
+calibration
+```
+
+---
+
+### 7. Final Takeaway
+
+This project uses a pipeline-based preprocessing approach because it is safer, more reproducible, and closer to real-world healthcare machine learning practice.
+
+```text
+Step 5 = define the dataset and preprocessing strategy
+
+Step 6 = execute preprocessing inside pipelines and evaluate models
+```
+
+The pipeline approach ensures that:
+
+```text
+training data teaches the preprocessing rules
+validation/test data only receive those rules
+model performance reflects honest generalization
+```
