@@ -2189,3 +2189,375 @@ In this project:
 > **Predictive realism was prioritized over artificially inflated performance.**
 
 The model only uses information that would realistically be available to clinicians **at discharge time**.
+
+## Step 5 — Modeling Dataset Preparation
+
+After completing feature engineering (Step 4), the next objective was to transform the research cohort into **machine-learning-ready datasets** while maintaining strict **data leakage prevention** and **subject-level independence**.
+
+This step focused on:
+
+* separating predictors (**X**) and outcome (**y**)
+* removing leakage variables
+* performing **subject-level train/validation/test split**
+* identifying feature types for preprocessing pipelines
+* preparing clean datasets for modeling in Step 6
+
+---
+
+### Why Step 5 Is Necessary
+
+At the end of Step 4, the cohort dataset still contained a mixture of:
+
+1. **Predictor variables (X)**
+   Demographics, utilization history, comorbidity burden, ICU exposure, procedures, vital/lab summaries, and medication-related features.
+
+2. **Outcome variable (Y)**
+   The target label:
+
+```text
+label_readmit_30d
+```
+
+3. **Research / tracking variables**
+
+```text
+subject_id
+hadm_id
+```
+
+While this structure is ideal for **research, auditing, and validation**, it is not appropriate for machine learning pipelines.
+
+A predictive model should learn:
+
+```text
+Predictors (X) → Outcome (Y)
+```
+
+not:
+
+```text
+Predictors + Outcome → Outcome
+```
+
+Keeping the target inside the predictor matrix would introduce **target leakage**, artificially inflating model performance.
+
+---
+
+## 5.1 Separating Predictors (X) and Target (Y)
+
+Instead of permanently deleting variables, we followed an **industry-standard ML workflow** by separating predictors and outcomes into dedicated datasets.
+
+### Before Separation
+
+The master cohort contained:
+
+| Variable Type | Examples                                     |
+| ------------- | -------------------------------------------- |
+| IDs           | `subject_id`, `hadm_id`                      |
+| Target        | `label_readmit_30d`                          |
+| Predictors    | demographics, utilization, clinical features |
+
+Example structure:
+
+```text
+cohort
+├── subject_id
+├── hadm_id
+├── label_readmit_30d
+├── age_at_admission
+├── prior_admission_count
+├── charlson_score
+├── icu_flag
+└── ...
+```
+
+### Separation Process
+
+We created:
+
+#### Predictor dataset (X)
+
+Contains only model inputs.
+
+#### Target dataset (y)
+
+Contains only the readmission label.
+
+Example:
+
+```python
+TARGET = "label_readmit_30d"
+
+y = cohort[TARGET]
+
+X = cohort.drop(columns=[TARGET])
+```
+
+After separation:
+
+### X
+
+```text
+subject_id
+hadm_id
+age_at_admission
+prior_admission_count
+charlson_score
+icu_flag
+...
+```
+
+### y
+
+```text
+label_readmit_30d
+0
+1
+0
+1
+...
+```
+
+### Why Separation Is Better Than Deletion
+
+This approach offers several advantages:
+
+#### 1. Preserves the master cohort
+
+The original cohort remains available for:
+
+* descriptive statistics
+* Table 1 creation
+* cohort validation
+* debugging
+* reproducibility
+* feature auditing
+
+#### 2. Prevents target leakage
+
+The model never sees the outcome variable during training.
+
+This ensures realistic evaluation and production-style modeling.
+
+#### 3. Supports reusable ML pipelines
+
+Machine learning frameworks expect:
+
+```text
+X_train, y_train
+X_val, y_val
+X_test, y_test
+```
+
+This structure makes experimentation easier across multiple algorithms.
+
+#### 4. Enables future experimentation
+
+Separate X and y datasets simplify:
+
+* model comparison
+* threshold tuning
+* ROC / PR curve evaluation
+* SHAP interpretation
+* calibration analysis
+
+without modifying the master cohort.
+
+---
+
+## 5.2 Leakage Variable Removal
+
+Variables directly related to label construction or unavailable at prediction time were removed before modeling.
+
+Examples include:
+
+```text
+next_admittime
+days_to_next_admit
+next_hadm_id
+next_admission_type
+```
+
+These variables contain **future information** and would leak knowledge of the outcome.
+
+Additional raw timestamp variables were excluded:
+
+```text
+admittime
+dischtime
+edregtime
+edouttime
+deathtime
+```
+
+Instead, clinically meaningful derived features were retained:
+
+```text
+los_days
+weekend_admission_flag
+prior_30d_admits
+```
+
+This ensures the model only uses information realistically available **at discharge**.
+
+---
+
+## 5.3 Subject-Level Data Split
+
+To avoid patient-level leakage, data splitting was performed at the **subject level** rather than admission level.
+
+### Why This Matters
+
+A single patient can have multiple hospitalizations.
+
+If one admission appears in training and another appears in testing, the model may indirectly memorize patient-specific patterns.
+
+This creates **overly optimistic performance estimates**.
+
+### Incorrect Split
+
+```text
+Patient A Admission 1 → Train
+Patient A Admission 2 → Test
+```
+
+### Correct Split
+
+```text
+Patient A → Train only
+Patient B → Test only
+```
+
+We used:
+
+```python
+GroupShuffleSplit
+```
+
+with:
+
+```text
+groups = subject_id
+```
+
+Final split proportions:
+
+| Dataset    | Approximate Size |
+| ---------- | ---------------: |
+| Training   |              64% |
+| Validation |              16% |
+| Testing    |              20% |
+
+This approach better simulates real-world deployment to **new unseen patients**.
+
+---
+
+## 5.4 Removing ID Variables
+
+Identifiers were temporarily retained for splitting:
+
+```text
+subject_id
+hadm_id
+```
+
+After train/validation/test partitioning, these variables were removed from predictors because they contain no clinical meaning and could encourage memorization.
+
+---
+
+## 5.5 Feature Type Identification
+
+The final modeling dataset included multiple feature types requiring different preprocessing strategies.
+
+Features were automatically classified into:
+
+### Numeric Features
+
+Examples:
+
+```text
+age_at_admission
+los_days
+charlson_score
+diagnosis_count
+procedure_count
+creatinine_mean
+heart_rate_mean
+```
+
+Used for:
+
+* median imputation
+* scaling (for logistic regression)
+
+---
+
+### Categorical Features
+
+Examples:
+
+```text
+gender
+race_grouped
+insurance_grouped
+admission_type_grouped
+discharge_group
+```
+
+Used for:
+
+* missing handling
+* one-hot encoding
+
+---
+
+### Binary Features (0/1)
+
+Examples:
+
+```text
+icu_flag
+polypharmacy_flag
+creatinine_missing_flag
+hemoglobin_missing_flag
+```
+
+Used for:
+
+* direct pass-through
+* minimal preprocessing
+
+### Why Automatic Feature Detection?
+
+Instead of manually listing all predictors, feature types were identified programmatically.
+
+Benefits include:
+
+* avoids missing variables
+* automatically updates if features change
+* reduces human error
+* improves reproducibility
+* supports scalable pipelines
+
+---
+
+## Step 5 Output
+
+Final machine-learning-ready datasets:
+
+```text
+X_train, y_train
+X_val, y_val
+X_test, y_test
+```
+
+These datasets are:
+
+✅ leakage-safe
+✅ subject-independent
+✅ preprocessing-ready
+✅ reproducible
+✅ production-style
+
+and serve as the direct input for **Step 6 — Predictive Modeling (Logistic Regression, Random Forest, and XGBoost)**.
+
