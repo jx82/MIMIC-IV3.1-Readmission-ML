@@ -3499,39 +3499,39 @@ validation/test data only receive those rules
 model performance reflects honest generalization
 ```
 
-````markdown
+Got it — here is a **clean copy-paste GitHub README version** (plain text formatting, no markdown code fence around the whole thing).
+
 # Step 6 — Modeling Pipeline & Baseline Models
 
 ## Purpose
 
-The goal of Step 6 is to build a **leakage-safe machine learning pipeline** for predicting **30-day hospital readmission** using engineered features from Step 5.
+The goal of Step 6 is to build a leakage-safe machine learning pipeline for predicting 30-day hospital readmission using engineered features from Step 5.
 
 This step introduces:
 
-- preprocessing pipelines
-- baseline model training
-- model evaluation
-- threshold tuning
-- final model comparison
+* preprocessing pipelines
+* baseline model training
+* model evaluation
+* threshold tuning
+* final model comparison
 
-The workflow follows a **real-world healthcare analytics pipeline**, commonly used in:
+The workflow follows a real-world healthcare analytics pipeline commonly used in:
 
-- hospital analytics teams
-- payer risk analytics
-- readmission management programs
-- healthcare AI applications
+* hospital analytics teams
+* payer risk analytics
+* readmission management programs
+* healthcare AI applications
 
 ---
 
-# Step 6 Objectives
+## Step 6 Objectives
 
 In this step, we will:
 
 ### 1. Load Modeling Datasets
 
-Load the leakage-safe datasets created in **Step 5**:
+Load the leakage-safe datasets created in Step 5:
 
-```python
 X_train
 X_val
 X_test
@@ -3539,9 +3539,8 @@ X_test
 y_train
 y_val
 y_test
-```
 
-These datasets were split at the **patient (`subject_id`) level** to prevent leakage across admissions.
+These datasets were split at the patient (subject_id) level to prevent leakage across admissions.
 
 ---
 
@@ -3551,237 +3550,211 @@ Instead of preprocessing in Step 5, transformations are intentionally deferred t
 
 This ensures:
 
-✅ no information leakage  
-✅ reproducible preprocessing  
-✅ consistent transformations across all models
+* No information leakage
+* Reproducible preprocessing
+* Consistent transformations across all models
 
 The preprocessing pipeline includes:
 
-### Numeric Features
-- median imputation
-- feature scaling
+#### Numeric Features
 
-### Categorical Features
-- missing category imputation
-- one-hot encoding
+* median imputation
+* feature scaling
+
+#### Categorical Features
+
+* missing category imputation
+* one-hot encoding
 
 Example workflow:
 
-```text
-numeric variables
-        ↓
-median imputation
-        ↓
-scaling
+Numeric variables
+↓
+Median imputation
+↓
+Scaling
 
-categorical variables
-        ↓
-most frequent imputation
-        ↓
-one-hot encoding
-```
+Categorical variables
+↓
+Most frequent imputation
+↓
+One-hot encoding
 
 ---
 
-# Why Use a Pipeline?
+## Why Use a Pipeline?
 
-In healthcare machine learning, preprocessing must be learned **only from training data**.
-
-For example:
+In healthcare machine learning, preprocessing must be learned only from training data.
 
 ### Incorrect Approach ❌
 
 Using the full dataset to calculate missing values:
 
-```python
 median_age = whole_dataset["age"].median()
-```
 
 This leaks information from validation and test sets.
 
----
-
 ### Correct Approach ✅
 
-The pipeline learns transformations **only from training data**:
+The pipeline learns transformations only from training data:
 
-```python
 median_age = X_train["age"].median()
-```
 
 Then applies the same transformation to:
 
-```python
 X_val
 X_test
-```
 
-This ensures the model behaves like a **real hospital deployment scenario** where future patient data is unknown.
+This ensures the model behaves like a real hospital deployment scenario where future patient data is unknown.
 
 ---
 
-# Step 6 Workflow
+## Step 6 Workflow
 
-```text
 Step 5 Outputs
 (X_train, X_val, X_test)
 (y_train, y_val, y_test)
 
-        ↓
+↓
 
 Preprocessing Pipeline
 (imputation + encoding + scaling)
 
-        ↓
+↓
 
 Train Baseline Models
 
-        ↓
+↓
 
 Validation Evaluation
 (ROC-AUC, PR-AUC)
 
-        ↓
+↓
 
 Threshold Tuning
 
-        ↓
+↓
 
 Select Best Model
 
-        ↓
+↓
 
 Final Test Evaluation
-```
 
 ---
 
-# Modeling Strategy
+## Modeling Strategy
 
 Three baseline models will be trained.
 
----
+### 1. Logistic Regression
 
-## 1. Logistic Regression
+#### Purpose
 
-### Purpose
-
-Establish a strong **interpretable baseline model**.
+Establish a strong interpretable baseline model.
 
 Benefits:
 
-- easy to explain clinically
-- interpretable coefficients
-- widely used in healthcare analytics
+* easy to explain clinically
+* interpretable coefficients
+* widely used in healthcare analytics
 
 Useful for:
 
-- hospital quality teams
-- payer analytics
-- care management
+* hospital quality teams
+* payer analytics
+* care management
 
 ---
 
-## 2. Random Forest
+### 2. Random Forest
 
-### Purpose
+#### Purpose
 
-Capture **nonlinear relationships** and feature interactions.
+Capture nonlinear relationships and feature interactions.
 
 Benefits:
 
-- robust to noisy variables
-- automatically models interactions
-- handles mixed feature types well
+* robust to noisy variables
+* automatically models interactions
+* handles mixed feature types well
 
 Example interactions:
 
-```text
 ICU stay + high Charlson score
-```
 
-or
-
-```text
-long LOS + prior readmissions
-```
+Long LOS + prior readmissions
 
 ---
 
-## 3. XGBoost
+### 3. XGBoost
 
-### Purpose
+#### Purpose
 
-Serve as the **high-performance benchmark model**.
+Serve as the high-performance benchmark model.
 
 Benefits:
 
-- excellent tabular data performance
-- strong predictive accuracy
-- widely used in healthcare ML competitions and industry
+* excellent tabular data performance
+* strong predictive accuracy
+* widely used in healthcare ML competitions and industry
 
 XGBoost often performs best for:
 
-- readmission prediction
-- mortality prediction
-- utilization risk prediction
+* readmission prediction
+* mortality prediction
+* utilization risk prediction
 
 ---
 
-# Feature Categories Used
+## Feature Categories Used
 
 The model uses features developed in earlier steps.
 
-## Tier 1 — Administrative Baseline
+### Tier 1 — Administrative Baseline
 
 Examples:
 
-```text
-age_at_admission
-gender
-race_grouped
-insurance_grouped
-prior_admission_count
-prior_30d_admits
-admission_type
-```
+* age_at_admission
+* gender
+* race_grouped
+* insurance_grouped
+* prior_admission_count
+* prior_30d_admits
+* admission_type
 
 ---
 
-## Tier 2 — Clinical Burden & Severity
+### Tier 2 — Clinical Burden & Severity
 
 Examples:
 
-```text
-charlson_score
-diagnosis_count
-los_days
-icu_flag
-procedure_count
-discharge_location_clean
-```
+* charlson_score
+* diagnosis_count
+* los_days
+* icu_flag
+* procedure_count
+* discharge_location_clean
 
 ---
 
-## Tier 3 — Physiologic Signals
+### Tier 3 — Physiologic Signals
 
 Examples:
 
-```text
-heart_rate_mean
-spo2_min
-creatinine_last
-wbc_max
-medication_count
-```
+* heart_rate_mean
+* spo2_min
+* creatinine_last
+* wbc_max
+* medication_count
 
-These features are restricted to information available **on or before discharge time** to avoid target leakage.
+These features are restricted to information available on or before discharge time to avoid target leakage.
 
 ---
 
-# Validation Strategy
+## Validation Strategy
 
-Model performance is evaluated on the **validation dataset (`X_val`)**.
+Model performance is evaluated on the validation dataset (X_val).
 
 Why?
 
@@ -3792,11 +3765,10 @@ The test dataset remains untouched.
 Evaluation metrics include:
 
 ### ROC-AUC
-Measures the model's ability to separate:
 
-```text
+Measures the model’s ability to separate:
+
 Readmitted vs Non-readmitted
-```
 
 Higher values indicate stronger discrimination.
 
@@ -3816,12 +3788,10 @@ PR-AUC better reflects performance on the positive class.
 
 Evaluates:
 
-```text
-True Positives
-False Positives
-False Negatives
-True Negatives
-```
+* True Positives
+* False Positives
+* False Negatives
+* True Negatives
 
 Helps understand operational tradeoffs.
 
@@ -3831,37 +3801,31 @@ Helps understand operational tradeoffs.
 
 Including:
 
-```text
-precision
-recall
-F1-score
-```
+* precision
+* recall
+* F1-score
 
 ---
 
-# Threshold Tuning
+## Threshold Tuning
 
 Healthcare prediction models rarely use the default threshold:
 
-```python
 0.5
-```
 
 Instead, thresholds are selected based on clinical goals.
-
-Examples:
 
 ### High Recall Strategy
 
 Goal:
 
-> Catch as many high-risk patients as possible.
+Catch as many high-risk patients as possible.
 
 Useful for:
 
-- discharge intervention
-- care coordination
-- social worker referral
+* discharge intervention
+* care coordination
+* social worker referral
 
 ---
 
@@ -3869,7 +3833,7 @@ Useful for:
 
 Goal:
 
-> Reduce unnecessary interventions.
+Reduce unnecessary interventions.
 
 Useful when resources are limited.
 
@@ -3879,42 +3843,38 @@ Useful when resources are limited.
 
 Example:
 
-> Flag the top 15% highest-risk patients.
+Flag the top 15% highest-risk patients.
 
 Threshold is selected based on the probability distribution of predictions.
 
 ---
 
-# Final Test Evaluation
+## Final Test Evaluation
 
-The test dataset is used **only once**.
+The test dataset is used only once.
 
 This occurs after:
 
-✅ best model selected  
-✅ threshold finalized
+* Best model selected
+* Threshold finalized
 
-The final test evaluation provides an:
-
-> **Unbiased estimate of real-world performance**
+The final test evaluation provides an unbiased estimate of real-world performance.
 
 ---
 
-# Expected Deliverables
+## Expected Deliverables
 
 At the end of Step 6, the project will produce:
 
 ### Model Performance Comparison
 
-Example:
+| Model               | ROC-AUC | PR-AUC |
+| ------------------- | ------- | ------ |
+| Logistic Regression | 0.69    | 0.32   |
+| Random Forest       | 0.73    | 0.38   |
+| XGBoost             | 0.77    | 0.44   |
 
-| Model | ROC-AUC | PR-AUC |
-|--------|----------|---------|
-| Logistic Regression | 0.69 | 0.32 |
-| Random Forest | 0.73 | 0.38 |
-| XGBoost | 0.77 | 0.44 |
-
-*(Illustrative example only)*
+*Illustrative example only*
 
 ---
 
@@ -3922,13 +3882,11 @@ Example:
 
 Top predictors may include:
 
-```text
-length of stay
-prior admissions
-Charlson score
-ICU stay
-discharge location
-```
+* length of stay
+* prior admissions
+* Charlson score
+* ICU stay
+* discharge location
 
 ---
 
@@ -3936,11 +3894,9 @@ discharge location
 
 Example:
 
-```text
 Threshold = 0.31
 Recall = 72%
 Precision = 38%
-```
 
 ---
 
@@ -3948,38 +3904,26 @@ Precision = 38%
 
 SHAP analysis will help explain:
 
-> Why a patient is predicted as high-risk.
+Why a patient is predicted as high-risk.
 
 Example:
 
-```text
 ↑ prior admissions
 ↑ LOS
 ↑ ICU exposure
 ↑ renal disease burden
-```
 
 This improves clinical interpretability and stakeholder trust.
 
 ---
 
-# Key Takeaway
+## Key Takeaway
 
-Step 6 transforms the project from:
+Step 6 transforms the project from a feature-engineering exercise into a real healthcare machine learning workflow using:
 
-> **A feature-engineering exercise**
-
-into
-
-> **A real healthcare machine learning workflow**
-
-using:
-
-- leakage-safe preprocessing
-- reproducible pipelines
-- interpretable evaluation
-- clinically meaningful threshold selection
+* leakage-safe preprocessing
+* reproducible pipelines
+* interpretable evaluation
+* clinically meaningful threshold selection
 
 This mirrors how hospital systems, payer organizations, and healthcare analytics teams deploy predictive models in production.
-````
-
