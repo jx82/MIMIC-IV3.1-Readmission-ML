@@ -2561,3 +2561,441 @@ These datasets are:
 
 and serve as the direct input for **Step 6 — Predictive Modeling (Logistic Regression, Random Forest, and XGBoost)**.
 
+## Step 5 — Modeling Dataset Preparation
+
+After completing feature engineering (Step 4), the next objective was to transform the research cohort into a **machine-learning-ready dataset** while maintaining strict **data leakage prevention**, **subject-level independence**, and **reproducible preprocessing workflows**.
+
+The goals of Step 5 were to:
+
+* remove leakage variables
+* separate predictors (**X**) and outcome (**y**)
+* perform **subject-level train/validation/test splitting**
+* classify feature types for preprocessing
+* design missing value strategies
+* prepare clean datasets for predictive modeling
+
+At the end of this step, the project produced:
+
+```text
+X_train, y_train
+X_val,   y_val
+X_test,  y_test
+```
+
+which serve as the direct input for **Step 6 — Predictive Modeling**.
+
+---
+
+# 5.1 Load Final Feature Dataset
+
+The starting point for Step 5 was the **fully engineered cohort** generated in Step 4.
+
+This dataset included:
+
+### Research / Tracking Variables
+
+* `subject_id`
+* `hadm_id`
+
+### Target Variable (Outcome)
+
+* `label_readmit_30d`
+
+### Predictor Variables
+
+Features engineered across three tiers:
+
+**Tier 1 — Administrative Baseline**
+
+* demographics
+* utilization history
+* admission context
+
+**Tier 2 — Clinical Burden & Care Intensity**
+
+* comorbidity burden
+* ICU exposure
+* procedures
+* discharge context
+
+**Tier 3 — Physiologic Signals**
+
+* laboratory summaries
+* vital sign summaries
+* medication complexity
+* missingness indicators
+
+At this stage, the dataset still represented a **research-ready master cohort**, rather than a modeling dataset.
+
+---
+
+# 5.2 Leakage Variable Removal
+
+Before modeling, variables containing **future information** or unavailable at prediction time were removed.
+
+### Label Construction Variables Removed
+
+The following variables were used to define readmission labels and therefore could not be used as predictors:
+
+```text
+next_admittime
+days_to_next_admit
+next_hadm_id
+next_admission_type
+```
+
+These variables contain direct information about future admissions and would introduce **target leakage**.
+
+### Timestamp Variables Removed
+
+Raw timestamps were also excluded:
+
+```text
+admittime
+dischtime
+edregtime
+edouttime
+deathtime
+```
+
+Instead of raw timestamps, clinically meaningful derived features were retained, such as:
+
+```text
+los_days
+prior_30d_admits
+```
+
+This ensured the model only used information realistically available **at discharge**, aligning with real-world deployment conditions.
+
+---
+
+# 5.3 Separating Predictors (X) and Target (Y)
+
+One important conceptual transition in Step 5 was understanding that the target variable (**Y**) was **not permanently deleted**.
+
+Instead, an **industry-standard machine learning workflow** was used to separate predictors and outcomes into dedicated datasets.
+
+### Before Separation
+
+The master cohort contained:
+
+```text
+subject_id
+hadm_id
+label_readmit_30d
+all engineered predictors
+```
+
+### After Separation
+
+The dataset was divided into:
+
+### Predictor Dataset (X)
+
+Contains:
+
+* engineered predictors
+* identifier variables (temporarily retained)
+
+### Target Dataset (y)
+
+Contains:
+
+```text
+label_readmit_30d
+```
+
+This separation follows the core machine learning framework:
+
+```text
+f(X) → y
+```
+
+where the model learns relationships between predictors (**X**) and outcomes (**y**).
+
+### Why Separation Is Better Than Deletion
+
+Rather than permanently removing variables, separation provides several advantages:
+
+#### Preserves the Master Cohort
+
+The original cohort remains available for:
+
+* descriptive statistics
+* cohort validation
+* debugging
+* feature quality checks
+* reproducibility
+
+#### Prevents Target Leakage
+
+Keeping the target outside of the predictor matrix prevents accidental inclusion during preprocessing or training.
+
+Without separation, the target variable could mistakenly be:
+
+* scaled
+* encoded
+* imputed
+* used as a predictor
+
+which would invalidate model performance.
+
+#### Supports Standard ML Pipelines
+
+Modern machine learning frameworks expect:
+
+```text
+X_train, y_train
+X_val,   y_val
+X_test,  y_test
+```
+
+This structure improves reproducibility and experimentation across multiple models.
+
+---
+
+# 5.4 Subject-Level Train / Validation / Test Split
+
+Hospital readmission modeling presents a unique challenge:
+
+A single patient may contribute **multiple admissions**.
+
+If one admission appears in training and another appears in testing, the model may indirectly memorize patient-specific patterns.
+
+### Incorrect Split (Patient Leakage)
+
+```text
+Patient A Admission 1 → Train
+Patient A Admission 2 → Test
+```
+
+This can inflate performance metrics unrealistically.
+
+### Correct Split (Subject-Level)
+
+```text
+Patient A → Train only
+Patient B → Test only
+```
+
+To prevent leakage, splitting was performed using:
+
+```python
+GroupShuffleSplit(groups=subject_id)
+```
+
+This ensured that all admissions from the same patient remained within a single dataset.
+
+### Final Dataset Allocation
+
+| Dataset    | Approximate Share |
+| ---------- | ----------------: |
+| Training   |               64% |
+| Validation |               16% |
+| Testing    |               20% |
+
+This approach better simulates **real-world deployment to unseen patients**.
+
+---
+
+# 5.5 Removing Identifier Variables
+
+Identifiers were temporarily retained because they were required for subject-level splitting.
+
+Retained initially:
+
+```text
+subject_id
+hadm_id
+```
+
+After splitting, these variables were removed from predictors because:
+
+* they are not clinical predictors
+* they may encourage memorization
+* they provide no real predictive value
+
+This left only clinically meaningful predictors for model training.
+
+---
+
+# 5.6 Feature Type Identification
+
+The final modeling dataset contained multiple variable types requiring different preprocessing strategies.
+
+Instead of manually listing all predictors, feature types were identified **programmatically** to improve scalability and reproducibility.
+
+Features were classified into three groups.
+
+### Numeric Features
+
+Examples:
+
+```text
+age_at_admission
+los_days
+charlson_score
+diagnosis_count
+procedure_count
+creatinine_mean
+heart_rate_mean
+```
+
+These variables will later receive:
+
+* median imputation
+* scaling (for logistic regression)
+
+---
+
+### Categorical Features
+
+Examples:
+
+```text
+gender
+race_grouped
+insurance_grouped
+admission_type_grouped
+discharge_group
+```
+
+These variables will later receive:
+
+* missing value handling
+* one-hot encoding
+
+---
+
+### Binary Features (0/1)
+
+Examples:
+
+```text
+icu_flag
+polypharmacy_flag
+hemoglobin_missing_flag
+creatinine_missing_flag
+```
+
+These variables generally require minimal preprocessing and can often pass directly into models.
+
+### Why Automatic Feature Detection?
+
+Automatic classification was chosen over manual feature lists because it:
+
+* reduces human error
+* prevents forgotten variables
+* automatically adapts to future feature engineering updates
+* improves reproducibility
+* supports scalable ML pipelines
+
+Feature validation confirmed:
+
+```text
+Total predictors: 76
+Successfully classified: 76
+Missing predictors: 0
+Duplicate predictors: 0
+```
+
+ensuring all variables were assigned to exactly one preprocessing group.
+
+---
+
+# 5.7 Missing Value Strategy
+
+Because healthcare data frequently contain missing information, preprocessing strategies were defined before modeling.
+
+### Numeric Features
+
+Missing values will be handled using:
+
+```text
+Median Imputation
+```
+
+Median imputation was preferred because many clinical variables are highly skewed and susceptible to outliers.
+
+Examples include:
+
+* creatinine
+* WBC
+* LOS
+* BUN
+
+### Categorical Features
+
+Missing categories will be filled with:
+
+```text
+"Unknown"
+```
+
+This preserves potentially meaningful missingness patterns.
+
+### Binary Features
+
+Binary variables will typically pass through without transformation.
+
+### Special Consideration: ICU-Only Variables
+
+Many Tier 3 physiologic features originate from ICU chart events.
+
+Non-ICU patients naturally lack these measurements.
+
+This missingness is **structural**, not random.
+
+Rather than removing these patients, the project retained:
+
+* imputed physiologic values
+* explicit missingness indicators
+
+This allows the model to learn whether the absence of measurements itself contains predictive information.
+
+---
+
+# Step 5 Output
+
+At the completion of Step 5, the project produced:
+
+### Final Modeling Datasets
+
+```text
+X_train, y_train
+X_val,   y_val
+X_test,  y_test
+```
+
+### Final Feature Groups
+
+```text
+numeric_features
+categorical_features
+binary_features
+```
+
+### Final Preprocessing Strategy
+
+* leakage-safe
+* subject-independent
+* reproducible
+* deployment-oriented
+
+These outputs form the foundation for:
+
+# Step 6 — Predictive Modeling
+
+Models to be developed:
+
+* Logistic Regression
+* Random Forest
+* XGBoost
+
+with evaluation using:
+
+* ROC-AUC
+* PR-AUC
+* threshold optimization
+* confusion matrix analysis
+* SHAP interpretation
