@@ -3927,3 +3927,646 @@ Step 6 transforms the project from a feature-engineering exercise into a real he
 * clinically meaningful threshold selection
 
 This mirrors how hospital systems, payer organizations, and healthcare analytics teams deploy predictive models in production.
+
+Yes — thank you for waiting. Here is the **full GitHub README-ready version** with diagrams, structure, code snippets, and explanations integrated into one clean section you can copy-paste directly into your project.
+
+# Step 6 — Model Training Outputs (`.pkl`) and Step 7 Relationship
+
+After model training in Step 6, the final trained model pipeline is saved as:
+
+```python
+best_readmission_model.pkl
+```
+
+This file is **not only an XGBoost model**.
+
+Instead, it contains the **entire trained machine learning pipeline**, including:
+
+* preprocessing rules
+* transformation mappings
+* trained XGBoost model
+* learned tree structure
+* hyperparameters
+
+Think of the `.pkl` as a **frozen prediction engine** that can later score new patients consistently.
+
+---
+
+# Step 6 Training Architecture
+
+The final pipeline saved in Step 6 has the following structure:
+
+```text
+best_readmission_model.pkl
+│
+└── Pipeline
+    │
+    ├── Step 1: preprocess
+    │   └── ColumnTransformer
+    │       │
+    │       ├── Numeric pipeline
+    │       │   ├── SimpleImputer
+    │       │   │   └── training medians
+    │       │   │
+    │       │   └── StandardScaler
+    │       │       ├── training means
+    │       │       └── training standard deviations
+    │       │
+    │       └── Categorical pipeline
+    │           ├── SimpleImputer
+    │           │   └── most frequent categories
+    │           │
+    │           └── OneHotEncoder
+    │               └── saved category mapping
+    │
+    └── Step 2: model
+        └── XGBClassifier
+            ├── hyperparameters
+            ├── trained decision trees
+            ├── split rules
+            ├── feature interactions
+            └── learned prediction structure
+```
+
+---
+
+# What is Stored Inside the `.pkl`?
+
+The `.pkl` file stores everything learned during training **from `X_train` only**.
+
+This prevents data leakage and guarantees reproducible preprocessing.
+
+---
+
+## 1. Numeric Imputation Rules
+
+For each numeric variable, the model stores the **median value learned from training data**.
+
+Examples:
+
+```text
+creatinine_last median = 1.10
+WBC_last median = 8.7
+LOS_days median = 4
+SBP_mean median = 118
+```
+
+When a future patient has missing data:
+
+Example:
+
+```text
+creatinine_last = missing
+```
+
+The model automatically fills it using:
+
+```text
+training median only
+```
+
+rather than recalculating a new value.
+
+This ensures future predictions remain consistent.
+
+---
+
+## 2. Numeric Scaling Rules
+
+Because the pipeline includes:
+
+```python
+StandardScaler()
+```
+
+the model stores:
+
+```text
+mean
+standard deviation
+```
+
+for every numeric feature.
+
+Example:
+
+```text
+age_at_admission
+mean = 63.4
+std = 17.8
+
+LOS_days
+mean = 6.2
+std = 8.4
+```
+
+The transformation formula is:
+
+```text
+scaled_value =
+(original_value − training_mean)
+/ training_std
+```
+
+This means:
+
+Validation, test, and future deployment data are transformed using the **exact same training-derived scaling rules**.
+
+---
+
+## 3. Categorical Imputation Rules
+
+For categorical variables, the pipeline stores the **most frequent category** from training data.
+
+Examples:
+
+```text
+gender → M
+
+insurance_grouped
+→ Medicare
+
+admission_type_grouped
+→ Emergency
+```
+
+If a future patient is missing a category value, the pipeline fills it using these saved defaults.
+
+---
+
+## 4. One-Hot Encoding Mapping
+
+The model remembers all categorical levels observed during training.
+
+Example:
+
+Original feature:
+
+```text
+gender
+```
+
+After encoding:
+
+```text
+gender_F
+gender_M
+```
+
+Example:
+
+```text
+insurance_grouped
+```
+
+becomes:
+
+```text
+insurance_Medicare
+insurance_Medicaid
+insurance_Private
+insurance_Other
+```
+
+The pipeline remembers this mapping permanently.
+
+Because the model uses:
+
+```python
+OneHotEncoder(handle_unknown="ignore")
+```
+
+future unseen categories do not crash the model.
+
+Instead:
+
+```text
+unknown category
+→ encoded as zeros
+```
+
+for that feature group.
+
+---
+
+## 5. Final Feature Matrix Structure
+
+After preprocessing, the original dataset is transformed into a fully numeric machine-learning matrix.
+
+### Before preprocessing
+
+```text
+age_at_admission
+LOS_days
+gender
+insurance_grouped
+creatinine_last
+```
+
+### After preprocessing
+
+```text
+scaled_age_at_admission
+scaled_LOS_days
+scaled_creatinine_last
+gender_F
+gender_M
+insurance_Medicare
+insurance_Private
+```
+
+The `.pkl` stores the **exact transformed feature order**.
+
+This matters because XGBoost learns patterns using transformed numeric matrices rather than raw DataFrames.
+
+---
+
+## 6. XGBoost Hyperparameters
+
+The `.pkl` also stores the final model settings.
+
+Example:
+
+```python
+n_estimators=500
+max_depth=4
+learning_rate=0.05
+subsample=0.8
+colsample_bytree=0.8
+objective="binary:logistic"
+eval_metric="auc"
+scale_pos_weight=<training imbalance ratio>
+tree_method="hist"
+random_state=42
+```
+
+These parameters determine:
+
+```text
+how many trees
+tree complexity
+learning speed
+imbalance handling
+```
+
+---
+
+## 7. Trained XGBoost Trees
+
+Most importantly, the `.pkl` stores the learned tree structure.
+
+Conceptually, the model learns rules like:
+
+```text
+IF LOS_days > threshold
+AND prior_admission_count > threshold
+AND creatinine_last elevated
+
+THEN:
+higher readmission risk
+```
+
+The model contains **hundreds of boosted trees**.
+
+Each tree contributes a small amount to prediction.
+
+Conceptually:
+
+```text
+baseline risk
++ tree 1 contribution
++ tree 2 contribution
++ tree 3 contribution
+...
+=
+final readmission probability
+```
+
+Example output:
+
+```text
+0.81
+```
+
+Meaning:
+
+```text
+81% predicted readmission risk
+```
+
+---
+
+# What is NOT Stored in the `.pkl`?
+
+The `.pkl` **does NOT contain patient datasets**.
+
+It does not save:
+
+```text
+X_train
+X_val
+X_test
+y_train
+y_val
+y_test
+```
+
+It also does not save:
+
+```text
+cohort building logic
+feature engineering notebook
+raw MIMIC tables
+Step 4 datasets
+```
+
+The `.pkl` stores only:
+
+```text
+learned preprocessing
++
+trained prediction logic
+```
+
+---
+
+# Relationship Between Step 5, Step 6, and Step 7
+
+## Step 5 — Modeling Dataset Preparation
+
+Step 5 prepares leakage-safe datasets:
+
+```text
+X_train
+X_val
+X_test
+```
+
+These contain:
+
+```text
+patient feature values only
+```
+
+Example patient row:
+
+| age | LOS | creatinine_last | ICU_flag |
+| --- | --- | --------------- | -------- |
+| 78  | 9   | 2.1             | 1        |
+
+Step 5 does **not** know how to predict readmission.
+
+It only contains patient records.
+
+---
+
+## Step 6 — Model Training
+
+Step 6 uses:
+
+```text
+X_train
+```
+
+to learn:
+
+```text
+preprocessing rules
++
+XGBoost model
+```
+
+Then validation data:
+
+```text
+X_val
+```
+
+is used for:
+
+```text
+model comparison
+threshold tuning
+```
+
+Finally:
+
+```text
+X_test
+```
+
+is used **once only** for honest final evaluation.
+
+Final outputs:
+
+```text
+best_readmission_model.pkl
+validation_model_comparison.csv
+threshold_tuning_validation.csv
+final_test_performance.csv
+```
+
+---
+
+## Step 7 — Model Interpretation
+
+Step 7 combines:
+
+```text
+Step 5 data
++
+Step 6 trained model (.pkl)
+```
+
+to answer:
+
+```text
+Why was this patient high risk?
+Which variables mattered most?
+How does the model behave clinically?
+```
+
+Step 7 uses:
+
+```text
+X_train
+```
+
+for SHAP background distribution.
+
+Step 7 often uses:
+
+```text
+X_test
+```
+
+for explaining unseen patients.
+
+---
+
+# Why Step 7 Needs BOTH Step 5 Data and `.pkl`
+
+A common question is:
+
+> If Step 6 already used `X_test`, why reload Step 5 data?
+
+Because:
+
+### Step 6 USED `X_test`
+
+but
+
+### Step 6 did NOT SAVE `X_test`
+
+inside the `.pkl`.
+
+The `.pkl` contains:
+
+```text
+trained brain
+```
+
+not:
+
+```text
+patient charts
+```
+
+To explain predictions, Step 7 needs both.
+
+---
+
+## Mental Model
+
+Think of the workflow like this:
+
+### Step 5
+
+```text
+patient charts
+```
+
+### Step 6
+
+```text
+doctor studies patient charts
+and learns patterns
+```
+
+### `.pkl`
+
+```text
+trained physician brain
+```
+
+### Step 7
+
+```text
+doctor brain
++
+patient chart
+=
+clinical explanation
+```
+
+Without patient data:
+
+```text
+doctor cannot explain a patient
+```
+
+Without trained model:
+
+```text
+patient chart alone
+cannot generate prediction
+```
+
+Both are required.
+
+---
+
+# Full Workflow Diagram
+
+```text
+Step 4
+Master feature dataset
+(all patients + all variables)
+            ↓
+
+Step 5
+Leakage-safe modeling datasets
+(drop IDs + split data)
+
+X_train
+X_val
+X_test
+            ↓
+
+Step 6
+Train model
+
+X_train
+→ learn preprocessing
+→ train XGBoost
+
+X_val
+→ choose best model
+→ threshold tuning
+
+X_test
+→ final honest evaluation
+            ↓
+
+best_readmission_model.pkl
+(trained prediction engine)
+            ↓
+
+Step 7
+Model interpretation
+
+Load:
+1. best_readmission_model.pkl
+2. X_train / X_test
+
+→ Feature importance
+→ SHAP explanations
+→ patient-level interpretation
+```
+
+## Example: Load Saved Model in Step 7
+
+```python
+import joblib
+
+best_model = joblib.load(
+    config.ARTIFACTS_DIR /
+    "step6_modeling" /
+    "best_readmission_model.pkl"
+)
+
+print("Model loaded successfully.")
+```
+
+## Example: Load Step 5 Data in Step 7
+
+```python
+X_train = pd.read_csv(
+    PROCESSED_DIR /
+    "mimic_readmission_X_train.csv"
+)
+
+X_test = pd.read_csv(
+    PROCESSED_DIR /
+    "mimic_readmission_X_test.csv"
+)
+```
+
+These are then used for:
+
+```text
+SHAP
+feature importance
+patient explanations
+```
+
