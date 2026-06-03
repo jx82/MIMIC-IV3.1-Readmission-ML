@@ -4858,4 +4858,370 @@ race_grouped_UNKNOWN
 
 still contribute useful contextual information, but their average marginal effect is smaller after accounting for stronger correlated severity predictors.
 
+# How to Interpret SHAP Beeswarm Plots
+
+The SHAP beeswarm plot is one of the most valuable model interpretation tools because it explains:
+
+1. **Feature importance**
+2. **Direction of feature effects on prediction**
+
+Unlike traditional feature importance, SHAP helps answer:
+
+> Why does the model predict higher or lower readmission risk?
+
+---
+
+# 1. What Do Red and Blue Colors Mean?
+
+In a SHAP beeswarm plot:
+
+### 🔴 Red = High Feature Value
+
+### 🔵 Blue = Low Feature Value
+
+For example:
+
+```python id="prior-example"
+prior_admission_count
+```
+
+* 🔴 red dots = patients with **many prior admissions**
+* 🔵 blue dots = patients with **few prior admissions**
+
+For:
+
+```python id="age-example"
+age_at_admission
+```
+
+* 🔴 red = older patients
+* 🔵 blue = younger patients
+
+For binary variables:
+
+```python id="binary-example"
+race_grouped_UNKNOWN
+discharge_group_home_self
+```
+
+typically:
+
+* 🔴 red = feature present (`1`)
+* 🔵 blue = feature absent (`0`)
+
+---
+
+# 2. What Does Left vs Right Mean?
+
+SHAP values represent how much a feature pushes prediction toward or away from readmission risk.
+
+### Right Side (+ SHAP value)
+
+Feature increases predicted readmission risk.
+
+Interpretation:
+
+> Pushes prediction toward higher readmission probability.
+
+---
+
+### Left Side (− SHAP value)
+
+Feature lowers predicted readmission risk.
+
+Interpretation:
+
+> Pushes prediction toward lower readmission probability.
+
+Conceptually:
+
+```text id="direction-concept"
+Lower Risk  ←──────── 0 ────────→  Higher Risk
+```
+
+---
+
+# 3. Why Does `prior_admission_count` Have One Direction?
+
+In the SHAP beeswarm plot:
+
+```python id="prior-count"
+prior_admission_count
+```
+
+Most:
+
+### 🔴 Red dots appear on the RIGHT
+
+Meaning:
+
+> Higher prior admission counts increase readmission risk.
+
+Clinically, this makes sense because patients with repeated hospitalizations tend to have:
+
+* chronic instability
+* higher healthcare utilization
+* greater likelihood of returning to the hospital
+
+Meanwhile:
+
+### 🔵 Blue dots appear on the LEFT
+
+Meaning:
+
+> Fewer prior admissions lower readmission risk.
+
+This aligns with established healthcare literature on utilization-based risk prediction.
+
+---
+
+# 4. Why Does `los_days` Show the Opposite Direction?
+
+At first glance, the SHAP direction for:
+
+```python id="los-example"
+los_days
+```
+
+may appear surprising.
+
+The plot suggests:
+
+### 🔴 Red dots (long LOS) appear on the LEFT
+
+Meaning:
+
+> Longer hospital stays lower predicted readmission risk.
+
+### 🔵 Blue dots (short LOS) appear on the RIGHT
+
+Meaning:
+
+> Shorter stays increase predicted readmission risk.
+
+Initially, this may seem counterintuitive because:
+
+> Longer stay often indicates more severe illness.
+
+However, several clinical explanations are plausible.
+
+---
+
+## Possible Explanation 1: Short Stays May Reflect Premature Discharge
+
+Patients discharged after very short hospitalizations may:
+
+* receive less stabilization
+* have incomplete treatment
+* require rapid return to care
+
+Example:
+
+```text id="short-los"
+1–2 day stay
+→ discharged quickly
+→ readmitted soon after
+```
+
+Meanwhile, longer stays may allow:
+
+* medication optimization
+* discharge planning
+* specialist consultation
+* rehabilitation placement
+
+which lowers readmission risk.
+
+---
+
+## Possible Explanation 2: Interaction With Discharge Destination
+
+Longer LOS patients may be discharged to:
+
+```python id="post-acute"
+rehab facility
+skilled nursing facility (SNF)
+post-acute care
+```
+
+rather than directly home.
+
+Additional care support may reduce readmission probability.
+
+---
+
+## Possible Explanation 3: Conditional Relationship After Severity Adjustment
+
+The model already includes severity-related variables:
+
+```python id="severity-vars"
+charlson_score
+procedure_count
+medication_count
+ICU-related variables
+```
+
+Once severity is already captured, LOS may no longer represent:
+
+> "How sick was the patient?"
+
+Instead, LOS may represent:
+
+> "How much care or stabilization did the patient receive?"
+
+Thus, the model learns:
+
+```text id="conditional-los"
+Short LOS → higher readmission risk
+
+Long LOS → lower readmission risk
+```
+
+conditional on clinical severity.
+
+This is a common phenomenon in nonlinear machine learning models.
+
+---
+
+# 5. Why Does `age_at_admission` Show Mixed Directions?
+
+For:
+
+```python id="age-shap"
+age_at_admission
+```
+
+the SHAP plot may show:
+
+### Some 🔴 Red dots on the RIGHT
+
+Meaning:
+
+> Older age increases readmission risk.
+
+But also:
+
+### Some 🔴 Red dots on the LEFT
+
+Meaning:
+
+> Older age lowers readmission risk.
+
+This occurs because XGBoost models capture:
+
+> nonlinear relationships
+
+rather than simple linear effects.
+
+Unlike logistic regression:
+
+```text id="linear-age"
+older age → always higher risk
+```
+
+XGBoost may learn more complex subgroup patterns.
+
+For example:
+
+### Middle-aged adults (45–65)
+
+may have:
+
+* chronic disease burden
+* repeated utilization
+* medication complexity
+
+leading to:
+
+> higher readmission risk
+
+Meanwhile:
+
+### Very elderly adults
+
+may experience:
+
+* hospice discharge
+* skilled nursing placement
+* alternative care pathways
+
+leading to:
+
+> different readmission patterns
+
+Thus:
+
+```text id="age-nonlinear"
+Age effect is heterogeneous
+across patient subgroups.
+```
+
+---
+
+# General Rule for Interpreting SHAP Beeswarm Plots
+
+### 🔴 Red dots on RIGHT
+
+> High feature value increases risk.
+
+Examples:
+
+```python id="red-right"
+prior_admission_count
+charlson_score
+```
+
+---
+
+### 🔴 Red dots on LEFT
+
+> High feature value lowers risk.
+
+Example:
+
+```python id="red-left"
+los_days
+```
+
+---
+
+### Red and Blue Mixed on Both Sides
+
+> Nonlinear or interaction effect.
+
+Examples:
+
+```python id="mixed-effects"
+age_at_admission
+hemoglobin
+WBC
+```
+
+Meaning:
+
+> The model learned more complex relationships rather than simple one-direction effects.
+
+---
+
+# Key Takeaway
+
+The SHAP beeswarm plot demonstrates that:
+
+* prior healthcare utilization
+* comorbidity burden
+* age
+* treatment complexity
+* hospitalization characteristics
+
+all contribute differently to readmission risk.
+
+Importantly, SHAP reveals that some predictors behave **nonlinearly** and may interact with other clinical variables, providing deeper insight than traditional linear models.
+
+In this project:
+
+* **Prior admissions** consistently increased risk.
+* **Longer LOS** unexpectedly lowered risk after accounting for severity.
+* **Age** demonstrated heterogeneous effects across patient populations.
+
+These findings illustrate the value of interpretable machine learning in healthcare risk prediction.
 
