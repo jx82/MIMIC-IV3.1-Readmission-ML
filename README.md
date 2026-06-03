@@ -5225,3 +5225,6 @@ In this project:
 
 These findings illustrate the value of interpretable machine learning in healthcare risk prediction.
 
+<img width="2369" height="2819" alt="shap_bar_plot" src="https://github.com/user-attachments/assets/7143419f-8e99-4a9e-aa58-9a315773ab5d" />
+<img width="2369" height="2819" alt="shap_bar_plot" src="https://github.com/user-attachments/assets/da17bf50-6a93-456e-8e20-52660b47edc6" />
+
