@@ -4570,3 +4570,292 @@ feature importance
 patient explanations
 ```
 
+# Why Do Some Features Appear Important in XGBoost Importance but Less Important in SHAP?
+
+During model interpretation, some variables such as:
+
+```python
+missing_spo2_flag
+race_grouped_UNKNOWN
+```
+
+appeared relatively important in XGBoost feature importance rankings, but were less prominent in SHAP plots.
+
+This difference is expected because:
+
+* XGBoost feature importance
+* SHAP importance
+
+measure different concepts.
+
+---
+
+# 1. XGBoost Importance vs SHAP Importance
+
+## XGBoost Feature Importance
+
+XGBoost importance typically measures:
+
+* split frequency
+* gain improvement
+* how often a feature is used in decision trees
+
+For example:
+
+```python
+missing_spo2_flag
+```
+
+may repeatedly appear in tree splits:
+
+```text
+IF missing_spo2_flag = 1
+    → lower risk branch
+```
+
+Even if the actual impact on prediction probability is modest.
+
+Thus, XGBoost interprets the feature as:
+
+> Frequently useful for tree splitting.
+
+---
+
+## SHAP Importance
+
+SHAP measures:
+
+> Average contribution of a feature to prediction output.
+
+SHAP asks:
+
+> How much does this feature move the predicted readmission risk?
+
+For example:
+
+```text
+prior_admission_count
+```
+
+may strongly shift prediction probability:
+
+```text
+0.10 → 0.70 readmission risk
+```
+
+while:
+
+```text
+missing_spo2_flag
+```
+
+may only slightly change prediction:
+
+```text
+0.30 → 0.34 risk
+```
+
+Thus:
+
+* XGBoost importance measures feature usage
+* SHAP importance measures prediction impact
+
+---
+
+# 2. Correlated Features Compete for Attribution
+
+Several features in the model represent overlapping clinical severity signals.
+
+Examples include:
+
+```python
+icu_flag
+los_days
+procedure_count
+medication_count
+spo2
+missing_spo2_flag
+```
+
+These variables are clinically related.
+
+For example:
+
+* ICU patients are more likely to have SpO2 monitored
+* ICU patients often have longer LOS
+* ICU patients usually receive more medications and procedures
+
+Once the model already captures severity using variables such as:
+
+```python
+icu_flag
+los_days
+medication_count
+```
+
+the additional contribution from:
+
+```python
+missing_spo2_flag
+```
+
+becomes smaller.
+
+SHAP distributes attribution across correlated features.
+
+This phenomenon is called:
+
+> Feature attribution competition
+
+and is common in healthcare machine learning.
+
+---
+
+# 3. Missingness Variables Often Behave as Operational Proxies
+
+In this project:
+
+```python
+missing_spo2_flag = 1
+```
+
+may indirectly indicate:
+
+* lower-acuity floor patients
+* fewer monitoring requirements
+* non-ICU hospitalization
+
+rather than physiologic instability itself.
+
+The model may learn patterns such as:
+
+```text
+ICU patient → SpO2 measured
+Floor patient → SpO2 often missing
+```
+
+Thus:
+
+```python
+missing_spo2_flag
+```
+
+acts more as an operational proxy variable rather than a direct clinical severity measure.
+
+After stronger severity variables are included, SHAP may assign lower marginal importance to the missingness flag.
+
+---
+
+# 4. Sparse One-Hot Encoded Features
+
+Variables such as:
+
+```python
+race_grouped_UNKNOWN
+```
+
+may only occur in a small subset of patients.
+
+Tree-based models often favor sparse binary indicators because they create clean splits:
+
+```text
+IF race_grouped_UNKNOWN = 1
+```
+
+This can increase XGBoost feature importance.
+
+However, SHAP evaluates:
+
+> Average contribution across all patients.
+
+If only a small percentage of patients have:
+
+```python
+race_grouped_UNKNOWN = 1
+```
+
+the average SHAP contribution becomes smaller.
+
+Therefore:
+
+* XGBoost importance may appear high
+* SHAP importance may appear lower
+
+This is expected behavior.
+
+---
+
+# 5. SHAP Display Limits
+
+SHAP plots were generated using:
+
+```python
+max_display=20
+```
+
+Features outside the top 20 variables are hidden from visualization.
+
+Increasing the display threshold:
+
+```python
+shap.summary_plot(
+    shap_values_array,
+    X_test_processed_df,
+    max_display=50
+)
+```
+
+may reveal additional variables such as:
+
+```python
+missing_spo2_flag
+race_grouped_UNKNOWN
+```
+
+further down the ranking.
+
+---
+
+# Key Interpretation
+
+A feature can:
+
+* appear frequently in tree splits
+* help partition patients operationally
+
+while still having:
+
+* smaller average contribution to final prediction probability
+
+This does not mean the feature is unimportant.
+
+Rather, it suggests the feature may provide:
+
+* indirect contextual information
+* operational workflow signals
+* redundant severity information already captured by stronger predictors
+
+---
+
+# Clinical Interpretation
+
+The final SHAP results suggest the model primarily relies on:
+
+* prior healthcare utilization
+* chronic disease burden
+* age
+* hospitalization severity
+* treatment complexity
+
+which are clinically plausible and consistent with published healthcare readmission literature.
+
+Variables such as:
+
+```python
+missing_spo2_flag
+race_grouped_UNKNOWN
+```
+
+still contribute useful contextual information, but their average marginal effect is smaller after accounting for stronger correlated severity predictors.
+
+
