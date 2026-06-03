@@ -5229,3 +5229,238 @@ These findings illustrate the value of interpretable machine learning in healthc
 <img width="2372" height="2817" alt="shap_beeswarm_plot" src="https://github.com/user-attachments/assets/ae79e8fc-826d-4b2f-bc95-41ec19a162a5" />
 
 
+## What Comes After Step 7?
+
+At this stage, the project has completed:
+
+* Cohort construction
+* Readmission label creation
+* Feature engineering
+* Modeling dataset preparation
+* Model training and evaluation
+* Model interpretation using SHAP
+
+Step 7 focused on understanding:
+
+> **Why the model predicts readmission risk**
+
+including:
+
+* Global feature importance
+* SHAP beeswarm interpretation
+* Patient-level explanations
+* Clinical interpretation of model outputs
+
+The remaining project phases will focus on translating model predictions into **clinically actionable and operationally meaningful healthcare insights**.
+
+> **Note:** The following steps are planned after completion of Step 7.20.
+
+---
+
+## Step 8 — Threshold Selection & Risk Stratification
+
+### Objective
+
+The model currently outputs probabilities:
+
+```text
+Patient A → 0.82
+Patient B → 0.41
+Patient C → 0.07
+```
+
+However, hospitals require operational decisions:
+
+> **Which patients should receive intervention resources?**
+
+### Planned Work
+
+#### Threshold comparison
+
+Evaluate multiple decision thresholds:
+
+```text
+0.30
+0.50
+0.70
+Top 10% highest-risk patients
+Top 15% highest-risk patients
+Top 20% highest-risk patients
+```
+
+#### Confusion matrix analysis
+
+Assess tradeoffs between:
+
+* Recall (capturing more readmissions)
+* Precision (reducing unnecessary intervention)
+
+#### Operational recommendation
+
+Recommend practical implementation strategies, such as:
+
+> Prioritizing intervention for the highest-risk 10–20% of patients.
+
+### Expected Deliverables
+
+* Threshold comparison table
+* Confusion matrix analysis
+* Precision–recall tradeoff evaluation
+* Risk stratification recommendation
+
+---
+
+## Step 9 — Model Calibration
+
+### Objective
+
+Evaluate whether predicted probabilities are reliable.
+
+Example:
+
+If the model predicts:
+
+> 100 patients have 80% readmission risk
+
+then approximately:
+
+> 80 patients should actually experience readmission.
+
+### Planned Work
+
+#### Calibration curve
+
+Compare:
+
+* Predicted probability
+* Observed readmission rate
+
+#### Brier score
+
+Measure probability accuracy.
+
+### Why This Matters
+
+In healthcare settings:
+
+> Reliable probabilities are critical for care management and resource allocation decisions.
+
+---
+
+## Step 10 — Fairness & Bias Evaluation
+
+### Objective
+
+Assess model performance across patient subgroups.
+
+### Planned subgroup analyses
+
+* Age groups
+* Race categories
+* Insurance type
+* Gender
+* ICU vs non-ICU patients
+
+### Evaluation Metrics
+
+Compare:
+
+* ROC-AUC
+* Sensitivity
+* Specificity
+* Risk prediction distribution
+
+### Why This Matters
+
+Healthcare machine learning models should avoid:
+
+> Systematic underperformance across vulnerable patient populations.
+
+---
+
+## Step 11 — Clinical Interpretation & Intervention Opportunities
+
+### Objective
+
+Translate machine learning findings into actionable healthcare recommendations.
+
+### Potential high-risk drivers
+
+Current findings suggest readmission risk may be associated with:
+
+1. Prior healthcare utilization
+2. Comorbidity burden
+3. Medication complexity
+4. Hospitalization severity
+5. Physiologic instability
+
+### Potential intervention strategies
+
+| Risk Driver            | Potential Intervention    |
+| ---------------------- | ------------------------- |
+| Frequent admissions    | Case management           |
+| Polypharmacy           | Medication reconciliation |
+| Chronic disease burden | Care coordination         |
+| High-risk discharge    | Enhanced follow-up        |
+
+### Goal
+
+Move beyond:
+
+> “The model predicts readmission.”
+
+toward:
+
+> “The model can inform hospital intervention strategies.”
+
+---
+
+## Step 12 — Final Portfolio Packaging
+
+### Objective
+
+Convert the project into a recruiter-ready healthcare data science portfolio.
+
+### Final Project Structure
+
+```text
+mimic_readmission/
+│── notebooks/
+│   ├── step1_cohort.ipynb
+│   ├── step2_labels.ipynb
+│   ├── step3_features.ipynb
+│   ├── step5_dataset_prep.ipynb
+│   ├── step6_modeling.ipynb
+│   └── step7_interpretation.ipynb
+│
+│── reports/
+│   ├── roc_curve.png
+│   ├── pr_curve.png
+│   ├── shap_bar_plot.png
+│   ├── shap_beeswarm_plot.png
+│   ├── low_risk_patient.png
+│   ├── high_risk_patient.png
+│   └── clinical_interpretation.md
+│
+│── README.md
+```
+
+### Final README Sections
+
+1. Clinical problem statement
+2. Cohort design
+3. Feature engineering
+4. Modeling pipeline
+5. Model performance
+6. SHAP interpretation
+7. Clinical implications
+8. Bias & limitations
+9. Future improvements
+
+---
+
+## Long-Term Goal
+
+The objective of this project is not only to build a predictive model, but also to demonstrate:
+
+> **How interpretable machine learning can support hospital readmission reduction strategies through clinically meaningful healthcare analytics.**
