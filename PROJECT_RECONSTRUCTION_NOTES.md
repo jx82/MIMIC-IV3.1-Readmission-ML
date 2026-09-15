@@ -8,44 +8,98 @@
 
 ## Quick Project Snapshot
 
-**Project goal:** ???
+**Project goal:** 
+
+using tree-based models to identify the group pf patients with higher risk of readmission within 30 days after releasing from hospitals. 
+1. reduce the cost of medical punishment from Medicare by %?
+2. what the benchmark of these high risk of readmission patient?
+3. optirize the resource of hospital bedding and resource
+4. why I focus on this research topic any personal story w/ it? 
 
 **Prediction target:** ???
 
+1. reduce the readmission rate by how much?
+2. 
+
 **Unit of observation:** ???
+1. each admission instead of each patient
 
 **Prediction time / intended use:** ???
+1. after releasing hospital 30 days
 
 **Main models:** Logistic Regression / Random Forest / XGBoost
 
 **Main evaluation metrics:** ???
 
-**Current best result:** ???
+1. administrate
+2. clinic
+3. treatment?
+4. 
 
+**Current best result:** ???
+1. I forgot
 ------------------------------------------------------------------------
 
 # 1. Research Question
 
 ### What am I predicting?
 
-???
+predict how much probability the patient will readmission within 30 days
 
 ### Why 30-day readmission?
 
-???
+industral Benchmark?
+1. hospital will get panalty of rejecting reinburace from Medicare or Medicaid?
+2. or hospital get less profit if they fail to manage the readmission
+3. 30 day readmission is marker for evaluating the quality of hospital care provided
 
 ### Why is this clinically or operationally useful?
 
-???
+30 day readmission can help us identify high probability of patient who may return w/n 30 days, so PA may call or contact them to have more intented connect and check them to earge them to go to see doctor. 
+
 
 ### What would the model output?
 
-???
+can predict the main factors that may highly correlated with readmission. 
+be able to evaluate the personal score for the risk of readmission and provide the strategy
 
 ### Questions to verify
 
 -   [ ] ???
 -   [ ] ???
+
+### population
+
+- 100,000
+- excluded pt died in hospital/after released from hospital
+- 
+
+### unite of observation
+- each admission
+
+### target
+- 1= readmitted within 30 day, 0 = no return
+
+### feature
+- demographics: age, gender, race
+- clinical: blood pressure, heart rate,
+- icu: use or not
+
+### split
+- when to split will matters due to the data leakage
+
+### models
+- baseline model = demo only - logistic
+- add clinical
+- add chronic diseases
+- add treatment usage
+- Decision tree model - Random Forest - XGBoost
+
+### metrics 
+- what does it mean
+
+### results
+
 
 ------------------------------------------------------------------------
 
