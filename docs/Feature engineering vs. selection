@@ -283,5 +283,4 @@ A couple of GitHub formatting tips for this file:
 - Use plain markdown tables and plain ` ```text ` blocks
 - Avoid odd inline code block IDs, because GitHub will show them literally
 
-I can also give you a shorter, more polished **GitHub README style version** if you want something less essay-like.
 ````
