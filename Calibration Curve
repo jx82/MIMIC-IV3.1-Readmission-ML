@@ -156,14 +156,3 @@ After I fit my model:
 A good model ranks well.
 A great model ranks well **and** produces trustworthy probabilities.
 
-Calibration separates intermediate ML practitioners from serious data scientists.
-
----
-
-If you'd like, I can also prepare:
-
-* A 1-page PDF version formatted for clean printing
-* Or a “Model Evaluation Checklist” sheet (ROC + PR + Calibration + SHAP)
-* Or a mini self-test worksheet to check your understanding
-
-You’re thinking like a real modeler now.
