@@ -97,7 +97,6 @@ This project uses MIMIC-IV hospital data to study the risk of readmission within
 
 Each eligible hospital admission is one observation, so a patient may contribute more than one admission. The modeling work compares logistic regression, random forest, and XGBoost. The project workflow covers cohort and outcome construction, feature preparation, model training, and evaluation.
 
-The exact cohort rules and results are being checked against the analysis code as this README is completed.
 
 
 ### Project Architecture - Readmission Prediction Pipeline
@@ -162,6 +161,8 @@ The exact cohort rules and results are being checked against the analysis code a
                        Step 7 — Evaluation
                      ROC-AUC | SHAP | Diagnostics
 ```
+The exact cohort rules and results are being checked against the analysis code as this README is completed.
+High-priority verification item: I require survival for 30 days after discharge, and need to verify how the variable of "discharge_location = died" is measured and defined. 
 
 ## 2. Clinical & Operational Motivation
 - Why 30-day readmission matters
