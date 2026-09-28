@@ -99,6 +99,70 @@ Each eligible hospital admission is one observation, so a patient may contribute
 
 The exact cohort rules and results are being checked against the analysis code as this README is completed.
 
+
+### Project Architecture - Readmission Prediction Pipeline
+
+```text
+                     MIMIC-IV Raw Tables
+ ┌──────────────────────────────────────────────────────────────┐
+ │                                                              │
+ │  admissions.csv        diagnoses_icd.csv     procedures_icd  │
+ │  patients.csv          icustays.csv          labevents.csv   │
+ │  chartevents.csv                                             │
+ │                                                              │
+ └──────────────────────────────────────────────────────────────┘
+                                │
+                                ▼
+                     Step 1 — Cohort Construction
+                 Define prediction unit = hospital admission (n= 546,028)
+                                │
+                                ▼
+                      Step 2 — Cohort Filtering
+             Remove admissions not eligible for prediction
+                       • in-hospital deaths = 11,801
+                       • in-hospital alive & discharge_location_died = 227
+                       • hospice discharge = 5,375
+                       • pediatric patients = 0
+                                │
+                                ▼
+                     Step 3 — Readmission Label (final cohort = 528,625)
+               Determine if next admission occurs ≤ 30 days
+                                │
+                                ▼
+                    Step 4 — Feature Engineering
+            Aggregate clinical tables to admission-level
+                                │
+          ┌─────────────────────┼─────────────────────┐
+          ▼                     ▼                     ▼
+
+   Tier 1 Features        Tier 2 Features        Tier 3 Features
+   (Administrative)      (Clinical Burden)     (Physiologic Signals)
+
+   age                   diagnosis_count       vital summaries
+   gender                procedure_count       lab summaries
+   ethnicity             charlson_score        medication features
+   insurance             los_days              temporal trends
+   prior_admits          icu_flag
+                         discharge_location
+                                │
+                                ▼
+                     Step 5 — Modeling Dataset
+               Final admission-level feature table
+                                │
+                                ▼
+                         Feature Matrix
+                         X  (features)
+                         y  (readmission)
+                                │
+                                ▼
+                        Step 6 — Modeling
+             Logistic Regression | Random Forest | XGBoost
+                                │
+                                ▼
+                       Step 7 — Evaluation
+                     ROC-AUC | SHAP | Diagnostics
+```
+
 ## 2. Clinical & Operational Motivation
 - Why 30-day readmission matters
 - Potential clinical use
