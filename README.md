@@ -93,6 +93,12 @@ incorporated into the final README.
 - Models
 - Main project workflow
 
+This project uses MIMIC-IV hospital data to study the risk of readmission within 30 days after discharge. It aims to identify admissions with higher readmission risk using information available by the time of discharge.
+
+Each eligible hospital admission is one observation, so a patient may contribute more than one admission. The modeling work compares logistic regression, random forest, and XGBoost. The project workflow covers cohort and outcome construction, feature preparation, model training, and evaluation.
+
+The exact cohort rules and results are being checked against the analysis code as this README is completed.
+
 ## 2. Clinical & Operational Motivation
 - Why 30-day readmission matters
 - Potential clinical use
