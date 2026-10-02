@@ -193,13 +193,116 @@ As health data and AI tools develop, hospitals may be able to combine informatio
 In a future hospital workflow, a validated readmission model could help create a discharge worklist for nurses and care managers. Staff could review patients with higher estimated risk before discharge, discuss barriers with the patient and family, and coordinate support matched to each person’s needs. After discharge, the team could track whether planned follow-up occurred and evaluate both patient outcomes and the workload required. The model would support prioritization; it would not determine treatment or services automatically. This project develops and evaluates a prediction model using historical data and does not test that operational workflow.
 
 ## 3. Research Question & Prediction Task
-- Research question
-- Unit of observation
-- Target
-- Prediction point
-- Intended use
 
-Research question: Among eligible MIMIC-IV hospital admissions, how well can information available by discharge identify admissions at higher risk of readmission within 30 days, and which measured factors contribute most to those predictions?
+This section summarizes the research question, admission-level observations, outcome definition, prediction point, and potential application of the completed analysis.
+
+- **Research question:** Predicting 30-day readmission and interpreting model predictions.
+- **Unit of observation:** One eligible hospital admission.
+- **Target:** An observed hospital readmission within 30 days after discharge.
+- **Prediction point:** Hospital discharge.
+- **Intended use:** Supporting assessment and prioritization of discharge and follow-up needs.
+
+### Research Question
+
+The analysis examined the following question:
+
+Among eligible MIMIC-IV hospital admissions, how well could information available by discharge identify admissions at higher risk of readmission within 30 days, and which measured factors contributed most to those predictions?
+
+Logistic regression, random forest, and XGBoost were compared using ROC-AUC and PR-AUC. Model interpretation included SHAP analysis to examine feature contributions.
+
+Feature contributions describe how the model formed its predictions. They do not establish that a feature caused readmission or that changing it would reduce risk.
+
+### Unit of Observation
+
+The analysis used one eligible hospital admission, identified by `hadm_id`, as one observation. The patient identifier, `subject_id`, linked admissions belonging to the same person.
+
+Patients could contribute multiple eligible admissions. Each admission served as an index admission with its own discharge time, features, and outcome label. An admission that counted as a readmission after an earlier stay could also serve as an index admission if it met the eligibility criteria.
+
+The modeling data were split by patient. Admissions belonging to the same patient were kept in the same partition, preventing the same person from appearing in both training and test data.
+
+### Target
+
+The analysis constructed a binary outcome indicating whether an index admission was followed by an observed hospital readmission within 30 days after discharge:
+
+- **1 — Readmission:** A subsequent admission met the implemented readmission criteria within the 30-day window.
+- **0 — No observed readmission:** No subsequent admission met those criteria within the window.
+
+The interval was calculated from the index admission’s discharge time to the subsequent admission’s admission time.
+
+The exact eligibility, timing, and exclusion rules will be documented from the labeling code in Section 5. A label of 0 represents the absence of a qualifying readmission in the available data; it does not establish complete recovery or the absence of care elsewhere.
+
+### Prediction Point
+
+The analysis was framed as prediction at hospital discharge, using patient characteristics, prior utilization, and information from the index hospitalization.
+
+Variables that directly revealed the future admission, including the next admission time and days until the next admission, were excluded from the modeling inputs.
+
+The availability of the remaining predictors at discharge is being checked against their source and construction logic. Database records may contain information finalized after discharge, so retrospective availability does not automatically establish availability in a live hospital workflow.
+
+The results describe a discharge-time prediction task. Predictions made at admission or earlier during the stay would require a different set of available features.
+
+### Intended Use
+
+The completed analysis assessed readmission prediction using historical data. Its potential application is to support care teams in prioritizing closer review of discharge and follow-up needs.
+
+In a future hospital workflow, a validated model could help nurses and care managers identify patients who may need additional assessment. Staff could then discuss medication understanding, follow-up arrangements, transportation, caregiver support, mobility, and home services with the patient and family.
+
+The study did not evaluate clinical deployment or whether acting on predictions improved outcomes. Those questions would require further validation and an evaluation of the model within an actual care workflow.
+
+### Verification Checklist for Sections 4–7
+
+The analysis has been completed. This checklist tracks the review of its implementation while the documentation is finalized. Each item should be supported by a notebook cell, script, or saved output.
+
+#### Section 4 — Dataset & Cohort Definition
+
+- [ ] Confirm the MIMIC-IV version and source tables actually used.
+- [ ] Recover the starting admission count and unique patient count.
+- [ ] Confirm how adult eligibility and age were calculated.
+- [ ] Identify each exclusion rule, its order, and the number of admissions removed.
+- [ ] Distinguish exclusions applied to index admissions from exclusions applied to subsequent readmissions.
+- [ ] Confirm handling of in-hospital deaths, hospice discharges, elective admissions, and transfers.
+- [ ] Confirm removal of duplicates and inconsistent admission or discharge timestamps.
+- [ ] Recover final admission and patient counts and reconcile them with the cohort flow.
+
+#### Section 5 — 30-Day Readmission Outcome
+
+- [ ] Confirm that admissions were ordered correctly within each patient.
+- [ ] Confirm whether labeling used the immediately next admission or the next qualifying admission.
+- [ ] Verify that the interval began at discharge rather than admission.
+- [ ] Check whether timing used exact elapsed time or rounded/truncated day values.
+- [ ] Confirm the treatment of same-day admissions, transfers, overlaps, and the 30-day boundary.
+- [ ] Confirm how planned or elective subsequent admissions were handled.
+- [ ] Check whether death exclusions applied only to the index stay, to the following 30 days, or to anyone with a recorded death.
+- [ ] Confirm how last admissions and uncertain follow-up were labeled.
+- [ ] Manually inspect several patients with multiple admissions to validate the labels.
+- [ ] Recover positive and negative label counts and the final readmission prevalence.
+
+#### Section 6 — Feature Engineering
+
+- [ ] Recover the final feature list from the dataset actually used for modeling.
+- [ ] Document each feature’s source table, calculation, and aggregation window.
+- [ ] Confirm that prior-utilization features used only events preceding the index admission.
+- [ ] Check that measurements and summaries did not include information from subsequent stays.
+- [ ] Verify age calculations, comorbidity scores, and diagnosis or procedure counts.
+- [ ] Confirm laboratory and vital-sign summaries, units, and missingness.
+- [ ] Verify missing-value indicators and categorical grouping rules.
+- [ ] Confirm whether raw discharge location, a grouped discharge feature, or neither was retained.
+- [ ] Review whether features could realistically have been available by discharge.
+- [ ] Reconcile the pipeline diagram with the features and tables actually used.
+
+#### Section 7 — Data Preparation & Leakage Prevention
+
+- [ ] Confirm which feature dataset and outcome labels were loaded for modeling.
+- [ ] Recover the patient-level split settings and train/test sizes.
+- [ ] Verify that no `subject_id` appeared in both training and test data.
+- [ ] Confirm that identifiers, outcome labels, next-admission fields, and other future information were excluded from predictors.
+- [ ] Confirm how numeric, categorical, and binary features were assigned to preprocessing steps.
+- [ ] Check that learned preprocessing, such as imputation, scaling, and encoding, was fitted on training data only.
+- [ ] If resampling or feature selection was used, confirm that it did not use test data.
+- [ ] Confirm that model or threshold selection did not repeatedly use the final test set.
+- [ ] Check that saved preprocessing and model artifacts match the reported analysis.
+
+**Review record:** For each resolved item, note the supporting code or output and whether the documentation alone changed or the analysis required correction.
 
 ## 4. Dataset & Cohort Definition 🔄
 - MIMIC-IV data
