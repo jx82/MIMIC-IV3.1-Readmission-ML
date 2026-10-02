@@ -165,11 +165,12 @@ The exact cohort rules and results are being checked against the analysis code a
 High-priority verification item: I require survival for 30 days after discharge, and need to verify how the variable of "discharge_location = died" is measured and defined. 
 
 ## 2. Clinical & Operational Motivation
-- Why 30-day readmission matters
-- Potential clinical use
-- Potential operational use
 
-### Clinical & Operational Motivation
+- **Patient and family needs:** Recovery, rehabilitation, and support after discharge.
+- **Clinical and hospital priorities:** Care coordination and identifying patients who may need closer review.
+- **Potential operational use:** Using risk estimates to prioritize discharge planning and follow-up.
+  
+### Patient and Family Perspective
 
 For many patients, leaving the hospital is not the end of treatment. It begins another stage of recovery, rehabilitation, and ongoing care in daily life. Someone recovering from a heart attack or stroke may need rehabilitation; a person living with diabetes may need continued support with medication and self-management; and a person treated for cancer may need further treatment or monitoring. Families and caregivers often help patients navigate this transition.
 
@@ -187,8 +188,6 @@ For a hospital, studying readmissions can reveal patterns that deserve closer at
 
 As health data and AI tools develop, hospitals may be able to combine information across the care journey and recognize changing needs more effectively. The value of such tools would depend on reliable data, careful evaluation across patient groups, integration into clinical work, and evidence that using them actually improves care. This project examines the earlier step: whether information available by discharge can predict 30-day readmission with useful performance.
 
-Research question: Among eligible MIMIC-IV hospital admissions, how well can information available by discharge identify admissions at higher risk of readmission within 30 days, and which measured factors contribute most to those predictions?
-
 ### Potential Operational Use
 
 In a future hospital workflow, a validated readmission model could help create a discharge worklist for nurses and care managers. Staff could review patients with higher estimated risk before discharge, discuss barriers with the patient and family, and coordinate support matched to each person’s needs. After discharge, the team could track whether planned follow-up occurred and evaluate both patient outcomes and the workload required. The model would support prioritization; it would not determine treatment or services automatically. This project develops and evaluates a prediction model using historical data and does not test that operational workflow.
@@ -199,6 +198,8 @@ In a future hospital workflow, a validated readmission model could help create a
 - Target
 - Prediction point
 - Intended use
+
+Research question: Among eligible MIMIC-IV hospital admissions, how well can information available by discharge identify admissions at higher risk of readmission within 30 days, and which measured factors contribute most to those predictions?
 
 ## 4. Dataset & Cohort Definition 🔄
 - MIMIC-IV data
