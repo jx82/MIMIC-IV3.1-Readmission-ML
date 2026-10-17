@@ -112,20 +112,42 @@ Each eligible hospital admission is one observation, so a patient may contribute
  └──────────────────────────────────────────────────────────────┘
                                 │
                                 ▼
-                     Step 1 — Cohort Construction
-                 Define prediction unit = hospital admission (n= 546,028)
+                 Step 1 — Load and Validate Data
+                    546,028 admission records
+                    223,452 unique patients
                                 │
                                 ▼
-                      Step 2 — Cohort Filtering
-             Remove admissions not eligible for prediction
-                       • in-hospital deaths = 11,801
-                       • in-hospital alive & discharge_location_died = 227
-                       • hospice discharge = 5,375
-                       • pediatric patients = 0
-                                │
-                                ▼
-                     Step 3 — Readmission Label (final cohort = 528,625)
-               Determine if next admission occurs ≤ 30 days
+                 Step 2 — Cohort Definition
+              Apply sequential eligibility criteria
+
+              • Unusable timestamps excluded:       0
+              • Reversed timestamps excluded:     175
+              • Death or hospice excluded:     17,302
+              • Estimated age below 18 excluded:    0
+              • Admission-type exclusions:          0
+
+              Death/hospice exclusion:
+              11,927 death-indicated admissions
+               5,397 hospice-indicated admissions
+                  22 meeting both criteria
+              11,927 + 5,397 − 22 = 17,302
+
+              Elective admissions retained
+                              |
+                              v
+                   Validated Step 2 Cohort
+                     528,551 admissions
+                     216,762 unique patients
+                     19 columns
+                              |
+                              v
+              Step 3 — Readmission Label Construction
+              Identify qualifying recorded returns
+                 within 30 days after discharge
+              using the source admission history
+
+              Review overlaps, transfers, and follow-up
+              Final labeled sample size: pending review
                                 │
                                 ▼
                     Step 4 — Feature Engineering
@@ -248,6 +270,102 @@ The completed analysis assessed readmission prediction using historical data. It
 In a future hospital workflow, a validated model could help nurses and care managers identify patients who may need additional assessment. Staff could then discuss medication understanding, follow-up arrangements, transportation, caregiver support, mobility, and home services with the patient and family.
 
 The study did not evaluate clinical deployment or whether acting on predictions improved outcomes. Those questions would require further validation and an evaluation of the model within an actual care workflow.
+
+
+## 4. Dataset & Cohort Definition
+
+### Data Sources and Unit of Analysis
+
+Cohort construction used the MIMIC-IV admissions and patients tables.
+
+- **Admissions:** 546,028 hospital admission records representing
+  223,452 unique patients.
+- **Patients:** 364,627 patient records containing demographic and
+  age-reference information.
+
+The unit of analysis was one hospital admission, identified by `hadm_id`.
+A patient, identified by `subject_id`, could contribute multiple admissions.
+
+Source validation found no missing patient or admission identifiers,
+no duplicate admission IDs, and no duplicate patient IDs in the patients
+table. All admissions matched a patient record.
+
+### Eligibility and Exclusion Rules
+
+We retained adult admissions with usable admission and discharge
+timestamps and discharge occurring at or after admission.
+
+Admissions were excluded if either `hospital_expire_flag = 1` or
+`discharge_location = "DIED"` indicated in-hospital death, or if the
+discharge location indicated hospice. These criteria applied to individual
+admissions rather than all admissions belonging to a patient.
+
+Age at admission was estimated as:
+
+`age_at_admission = anchor_age + admission_year - anchor_year`
+
+The patient-information merge preserved the admission count. No admissions
+had missing estimated age or an estimated age below 18.
+
+All admission types were retained, including 13,019 elective admissions.
+Admission type described how the starting stay began and was not used
+as an exclusion criterion.
+
+### Cohort Flow
+
+Exclusions were applied sequentially so each removed admission was
+counted once.
+
+| Stage | Admissions excluded at stage | Admissions remaining |
+|---|---:|---:|
+| Initial admissions | — | 546,028 |
+| Require usable timestamps | 0 | 546,028 |
+| Exclude discharge before admission | 175 | 545,853 |
+| Exclude death or hospice | 17,302 | 528,551 |
+| Require estimated age ≥18 | 0 | 528,551 |
+| Review admission types; retain all categories | 0 | 528,551 |
+
+The validated **Step 2 cohort contained 528,551 admissions from
+216,762 unique patients**.
+
+### Data-Quality Findings
+
+**Timestamp ordering.** Both admission and discharge timestamps were
+present and parseable for all source admissions. We excluded 175 records
+with discharge preceding admission without altering their original
+timestamps. Five records with identical admission and discharge timestamps
+were retained at this stage; none indicated death or hospice discharge.
+
+**Mortality-field agreement.** Among the 545,853 admissions evaluated
+after timestamp exclusions, 227 had a mortality flag of 0 with discharge
+location `DIED`, and 143 had a mortality flag of 1 with another recorded
+location. These 370 disagreements did not establish which field was
+correct. Another 161 admissions had a mortality flag of 1 with a missing
+discharge location and were reported separately as incomplete information.
+
+Using either mortality indicator identified 11,927 admissions.
+Hospice was indicated for 5,397 admissions, including 22 also identified
+by the death rule. The combined exclusion therefore removed
+17,302 unique admissions.
+
+### Saved Outputs and Handoff
+
+The cohort was saved as `cohort_step2.csv`, with 19 columns:
+the 16 original admission fields plus `anchor_age`, `anchor_year`,
+and `age_at_admission`. The aggregate cohort flow was saved as
+`cohort_step2_flow.csv`.
+
+Final checks confirmed unique admission IDs, valid identifiers and
+timestamp ordering, adult eligibility, absence of admissions meeting
+the death/hospice exclusions, and reconciliation of exclusion counts.
+Read-back checks verified the exported admission IDs and patient count.
+
+This is the cohort of potential prediction observations, not yet the
+final labeled modeling sample. Step 3 will define qualifying 30-day
+returns and address overlapping encounters, transfers, and follow-up
+limitations. Any additional outcome-related exclusions will be documented
+separately.
+
 
 ### Verification Checklist for Sections 4–7
 
