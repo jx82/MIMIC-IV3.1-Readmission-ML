@@ -11,10 +11,10 @@
 
 ## Project Progress
 
-- [x] Project question and objectives
+- [ ] Project question and objectives
 - [ ] Cohort definition
 - [ ] 30-day readmission outcome
-- [ ] Feature engineering
+- [x] Feature engineering
 - [ ] Leakage prevention
 - [ ] Train/validation/test strategy
 - [ ] Logistic Regression
@@ -24,7 +24,7 @@
 - [ ] SHAP interpretation
 - [ ] Limitations and reproducibility
 
-**Last updated:** September 25, 2026
+**Last updated:** October 26, 2026
 
 ## Documentation Progress
 
@@ -32,31 +32,32 @@ This project is currently undergoing a structured review and documentation updat
 Each stage is being verified against the original analysis code before being
 incorporated into the final README.
 
-**Target v1.0 publication: October 15, 2026**
+**Last updated:** October 26, 2026  
+**Target README v1.0 publication:** November 11, 2026
 
-| Date | Focus | Status |
-|------|-------|--------|
-| Sep 25 | README structure & project overview | 🔄 In progress |
-| Sep 26 | Cohort definition | ⬜ Planned |
-| Sep 27 | 30-day readmission outcome | ⬜ Planned |
-| Sep 28 | Cohort edge cases & exclusions | ⬜ Planned |
-| Sep 29 | Tier 1 features | ⬜ Planned |
-| Sep 30 | Tier 2 features | ⬜ Planned |
-| Oct 1 | Tier 3 features | ⬜ Planned |
-| Oct 2 | Data leakage review | ⬜ Planned |
-| Oct 3 | Patient-level data splitting | ⬜ Planned |
-| Oct 4 | Preprocessing pipeline | ⬜ Planned |
-| Oct 5 | Logistic Regression | ⬜ Planned |
-| Oct 6 | Random Forest | ⬜ Planned |
-| Oct 7 | XGBoost | ⬜ Planned |
-| Oct 8 | Evaluation metrics | ⬜ Planned |
-| Oct 9 | Model results | ⬜ Planned |
-| Oct 10 | SHAP & model interpretation | ⬜ Planned |
-| Oct 11 | Key findings | ⬜ Planned |
-| Oct 12 | Limitations & future work | ⬜ Planned |
-| Oct 13 | Repository cleanup & reproducibility | ⬜ Planned |
-| Oct 14 | Final README review | ⬜ Planned |
-| Oct 15 | README v1.0 publication | ⬜ Planned |
+| Review / Target Date | Focus | Status |
+|---------------------|-------|--------|
+| Oct 10, 2026 | README structure & project overview | ✅ Completed |
+| Oct 12, 2026 | Cohort definition | ✅ Completed |
+| Oct 20, 2026 | 30-day readmission outcome | ✅ Completed |
+| Oct 22, 2026 | Cohort edge cases & exclusions | ✅ Completed |
+| Oct 26, 2026 | Tier 1 features | 🔄 In progress |
+| Oct 27, 2026 | Tier 2 features | ⬜ Planned |
+| Oct 28, 2026 | Tier 3 features | ⬜ Planned |
+| Oct 29, 2026 | Data leakage review | ⬜ Planned |
+| Oct 30, 2026 | Patient-level data splitting | ⬜ Planned |
+| Oct 31, 2026 | Preprocessing pipeline | ⬜ Planned |
+| Nov 1, 2026 | Logistic Regression | ⬜ Planned |
+| Nov 2, 2026 | Random Forest | ⬜ Planned |
+| Nov 3, 2026 | XGBoost | ⬜ Planned |
+| Nov 4, 2026 | Evaluation metrics | ⬜ Planned |
+| Nov 5, 2026 | Model results | ⬜ Planned |
+| Nov 6, 2026 | SHAP & model interpretation | ⬜ Planned |
+| Nov 7, 2026 | Key findings | ⬜ Planned |
+| Nov 8, 2026 | Limitations & future work | ⬜ Planned |
+| Nov 9, 2026 | Repository cleanup & reproducibility | ⬜ Planned |
+| Nov 10, 2026 | Final README review | ⬜ Planned |
+| Nov 11, 2026 | README v1.0 publication | ⬜ Planned |
 
 # Predicting 30-Day Hospital Readmission Using MIMIC-IV
 
