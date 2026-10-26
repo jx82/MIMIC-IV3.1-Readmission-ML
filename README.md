@@ -313,17 +313,37 @@ as an exclusion criterion.
 
 ### Cohort Flow
 
-Exclusions were applied sequentially so each removed admission was
-counted once.
+Exclusions were applied sequentially so each removed admission
+was counted once.
 
-| Stage | Admissions excluded at stage | Admissions remaining |
-|---|---:|---:|
-| Initial admissions | — | 546,028 |
-| Require usable timestamps | 0 | 546,028 |
-| Exclude discharge before admission | 175 | 545,853 |
-| Exclude death or hospice | 17,302 | 528,551 |
-| Require estimated age ≥18 | 0 | 528,551 |
-| Review admission types; retain all categories | 0 | 528,551 |
+| Step | Stage | Admissions excluded | Admissions remaining |
+|------|-------|--------------------:|---------------------:|
+| 1 | Initial admissions | — | 546,028 |
+| 2 | Require usable timestamps | 0 | 546,028 |
+| 2 | Exclude discharge before admission | 175 | 545,853 |
+| 2 | Exclude death or hospice | 17,302 | 528,551 |
+| 2 | Require estimated age ≥18 | 0 | 528,551 |
+| 2 | Review admission types; retain all categories | 0 | 528,551 |
+| 3 | Exclude overlapping or touching admissions | 4,194 | 524,357 |
+| 3 | Exclude uncertain returns | 23 | 524,334 |
+| 3 | Exclude unresolved mortality chronology | 25 | 524,309 |
+
+The validated **Step 2 cohort** contained **528,551 admissions
+from 216,762 unique patients**.
+
+The final **Step 3 labeled cohort** contained **524,309 admissions
+from 216,032 unique patients**.
+
+#### Outcome Distribution
+
+| 30-day readmission label | Admissions | Percentage |
+|-------------------------|-----------:|-----------:|
+| 1 — Qualifying recorded readmission | 106,111 | 20.24% |
+| 0 — No qualifying recorded readmission | 418,198 | 79.76% |
+| **Total** | **524,309** | **100.00%** |
+
+A negative label indicates no qualifying readmission recorded within
+30 days; it does not establish complete follow-up or survival.
 
 The validated **Step 2 cohort contained 528,551 admissions from
 216,762 unique patients**.
