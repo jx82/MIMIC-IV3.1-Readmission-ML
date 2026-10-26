@@ -59,8 +59,6 @@ incorporated into the final README.
 
 ---
 
-# README Outline
-
 ## 1. Project Overview
 - Project goal
 - Dataset
