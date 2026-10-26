@@ -1,78 +1,52 @@
 # Predicting 30-Day Hospital Readmission Using MIMIC-IV
 
-> **Project Status: Active Reconstruction & Documentation**
->
-> This project is being systematically reviewed and documented after
-> completion of the initial modeling workflow. I am currently validating
-> cohort construction, outcome definition, feature engineering, leakage
-> prevention, and model evaluation against the original analysis code.
->
-## Project Progress
+This project studies whether information available by hospital discharge can identify admissions at higher risk of a qualifying recorded readmission within 30 days. The workflow covers cohort validation, outcome labeling, three tiers of predictors, and comparison of logistic regression, random forest, and XGBoost.
 
-- [ ] Project question and objectives
-- [ ] Cohort definition
-- [ ] 30-day readmission outcome
-- [x] Feature engineering
-- [ ] Leakage prevention
-- [ ] Train/validation/test strategy
-- [ ] Logistic Regression
-- [ ] Random Forest
-- [ ] XGBoost
-- [ ] Model evaluation
-- [ ] SHAP interpretation
-- [ ] Limitations and reproducibility
-
-**Last updated:** October 26, 2026
-
-## Documentation Progress
-
-This project is currently undergoing a structured review and documentation update.
-Each stage is being verified against the original analysis code before being
-incorporated into the final README.
+**Current status:** Cohort construction and readmission labeling have been reviewed and completed. Tier 1 feature engineering is in progress. The initial modeling workflow was previously completed; its features, splitting, preprocessing, and results are being rechecked before final reporting.
 
 **Last updated:** October 26, 2026  
 **Target README v1.0 publication:** November 11, 2026
 
-| Review / Target Date | Focus | Status |
-|---------------------|-------|--------|
-| Oct 10, 2026 | README structure & project overview | ✅ Completed |
-| Oct 12, 2026 | Cohort definition | ✅ Completed |
-| Oct 20, 2026 | 30-day readmission outcome | ✅ Completed |
-| Oct 22, 2026 | Cohort edge cases & exclusions | ✅ Completed |
-| Oct 26, 2026 | Tier 1 features | 🔄 In progress |
-| Oct 27, 2026 | Tier 2 features | ⬜ Planned |
-| Oct 28, 2026 | Tier 3 features | ⬜ Planned |
-| Oct 29, 2026 | Data leakage review | ⬜ Planned |
-| Oct 30, 2026 | Patient-level data splitting | ⬜ Planned |
-| Oct 31, 2026 | Preprocessing pipeline | ⬜ Planned |
-| Nov 1, 2026 | Logistic Regression | ⬜ Planned |
-| Nov 2, 2026 | Random Forest | ⬜ Planned |
-| Nov 3, 2026 | XGBoost | ⬜ Planned |
-| Nov 4, 2026 | Evaluation metrics | ⬜ Planned |
-| Nov 5, 2026 | Model results | ⬜ Planned |
-| Nov 6, 2026 | SHAP & model interpretation | ⬜ Planned |
-| Nov 7, 2026 | Key findings | ⬜ Planned |
-| Nov 8, 2026 | Limitations & future work | ⬜ Planned |
-| Nov 9, 2026 | Repository cleanup & reproducibility | ⬜ Planned |
-| Nov 10, 2026 | Final README review | ⬜ Planned |
-| Nov 11, 2026 | README v1.0 publication | ⬜ Planned |
+## Contents
 
----
+- [1. Motivation and Intended Use](#1-motivation-and-intended-use)
+- [2. Research Question and Prediction Task](#2-research-question-and-prediction-task)
+- [3. Analysis Pipeline](#3-analysis-pipeline)
+- [4. Data Sources and Cohort Construction](#4-data-sources-and-cohort-construction)
+- [5. Readmission Outcome](#5-readmission-outcome)
+- [6. Feature Engineering](#6-feature-engineering)
+- [7. Data Preparation and Leakage Prevention](#7-data-preparation-and-leakage-prevention)
+- [8. Modeling and Evaluation](#8-modeling-and-evaluation)
+- [9. Limitations and Future Work](#9-limitations-and-future-work)
+- [10. Outputs and Reproducibility](#10-outputs-and-reproducibility)
+- [11. Documentation Progress](#11-documentation-progress)
 
-## 1. Project Overview
-- Project goal
-- Dataset
-- Prediction task
-- Models
-- Main project workflow
+## 1. Motivation and Intended Use
 
-This project uses MIMIC-IV hospital data to study the risk of readmission within 30 days after discharge. It aims to identify admissions with higher readmission risk using information available by the time of discharge.
+Leaving the hospital begins another stage of recovery. Patients and families may need help understanding medications, arranging follow-up, recognizing concerning symptoms, and managing rehabilitation, transportation, or care at home. These needs motivate my interest in using health data to understand the period after discharge.
 
-Each eligible hospital admission is one observation, so a patient may contribute more than one admission. The modeling work compares logistic regression, random forest, and XGBoost. The project workflow covers cohort and outcome construction, feature preparation, model training, and evaluation.
+A validated readmission model could help nurses and care managers prioritize patients for closer assessment and discharge planning. A risk estimate would support discussion with patients and families; clinical judgment and individual circumstances would guide care.
 
+This project examines prediction using historical hospital data. It does not evaluate deployment, determine which services a patient needs, or demonstrate that acting on predictions improves recovery or reduces readmissions.
 
+## 2. Research Question and Prediction Task
 
-### Project Architecture - Readmission Prediction Pipeline
+**Research question:** Among eligible MIMIC-IV hospital admissions, how well can information available by discharge identify admissions at higher risk of readmission within 30 days, and which measured factors contribute most to those predictions?
+
+| Component | Definition |
+|-----------|------------|
+| Unit of observation | One eligible hospital admission, identified by `hadm_id` |
+| Patient linkage | `subject_id` links admissions belonging to the same patient |
+| Prediction point | Discharge from the index admission |
+| Target | `label_readmit_30d`, indicating a qualifying recorded return within 30 days after discharge |
+| Candidate predictors | Demographics, prior utilization, and information from the index hospitalization |
+| Model comparison | Logistic regression, random forest, and XGBoost; results pending review |
+
+A patient may contribute multiple eligible index admissions. A stay counted as a return after an earlier admission may itself serve as an index admission if eligible. Patient-level splitting is the intended evaluation strategy; its implementation remains to be verified during the current review.
+
+## 3. Analysis Pipeline
+
+The detailed flowchart summarizes cohort accounting and the analysis workflow. Steps 1–3 are complete; Tier 1 feature engineering is in progress. Later stages and the candidate feature tiers remain subject to the current review.
 
 ```text
                     
@@ -87,11 +61,13 @@ MIMIC-IV Raw Tables
                                 │
                                 ▼
                  Step 1 — Load and Validate Data
+                            Completed
                     546,028 admission records
                     223,452 unique patients
                                 │
                                 ▼
                  Step 2 — Cohort Definition
+                            Completed
               Apply sequential eligibility criteria
 
               • Unusable timestamps excluded:           0
@@ -116,6 +92,7 @@ MIMIC-IV Raw Tables
                                 │
                                 ▼
               Step 3 — Readmission Label Construction
+                            Completed
               Identify qualifying recorded returns
                  within 30 days after discharge
               using the full source admission history
@@ -134,11 +111,11 @@ MIMIC-IV Raw Tables
                      19 cohort columns + outcome label
 
                      Readmission (Y = 1):       106,111
-                     No recorded return (Y = 0): 418,198
+                     No qualifying return (Y = 0): 418,198
                                 │
                                 ▼
                     Step 4 — Feature Engineering
-                            In progress
+                     Tier 1 in progress
             Construct predictors available by discharge
             Aggregate clinical tables to admission-level
                                 │
@@ -146,6 +123,7 @@ MIMIC-IV Raw Tables
           ▼                     ▼                     ▼
 
    Tier 1 Features        Tier 2 Features        Tier 3 Features
+    (In progress)        (Pending review)      (Pending review)
    (Administrative)      (Clinical Burden)     (Physiologic Signals)
 
    age                   diagnosis_count       vital summaries
@@ -160,7 +138,7 @@ MIMIC-IV Raw Tables
                                 │
                                 ▼
                Step 5 — Modeling Dataset and Split
-                             Planned
+                        Pending review
                Final admission-level feature table
                Patient-level train/validation/test split
                Fit preprocessing on training data only
@@ -172,149 +150,45 @@ MIMIC-IV Raw Tables
                                 │
                                 ▼
                         Step 6 — Modeling
-                             Planned
+                        Pending review
              Logistic Regression | Random Forest | XGBoost
                                 │
                                 ▼
                Step 7 — Evaluation and Interpretation
-                             Planned
+                        Pending review
               ROC-AUC | PR-AUC | Calibration | SHAP
 
 Note: Y = 0 means no qualifying readmission was recorded within
 30 days; it does not establish complete follow-up or survival.
 ```
-The exact cohort rules and results are being checked against the analysis code as this README is completed.
-High-priority verification item: I require survival for 30 days after discharge, and need to verify how the variable of "discharge_location = died" is measured and defined. 
 
-## 2. Clinical & Operational Motivation
+## 4. Data Sources and Cohort Construction
 
-- **Patient and family needs:** Recovery, rehabilitation, and support after discharge.
-- **Clinical and hospital priorities:** Care coordination and identifying patients who may need closer review.
-- **Potential operational use:** Using risk estimates to prioritize discharge planning and follow-up.
-  
-### Patient and Family Perspective
+**Status: ✅ Completed**
 
-For many patients, leaving the hospital is not the end of treatment. It begins another stage of recovery, rehabilitation, and ongoing care in daily life. Someone recovering from a heart attack or stroke may need rehabilitation; a person living with diabetes may need continued support with medication and self-management; and a person treated for cancer may need further treatment or monitoring. Families and caregivers often help patients navigate this transition.
+### Source Tables
 
-At home, questions may arise that were difficult to anticipate in the hospital. Which medicines should the patient start, stop, or change? Is a new symptom expected, or should the family contact the care team? How will the patient get to follow-up appointments? Can they move around safely or manage daily tasks? Patients and caregivers may also need help with equipment, home health services, lifestyle changes, and the anxiety that comes with recovery. A check-in after discharge can reveal concerns that become clear only in the patient’s usual living environment.
+Cohort construction used the MIMIC-IV v3.1 `admissions` and `patients` tables. The source admissions table contained **546,028 admissions from 223,452 unique patients**. The patients table contained **364,627 patient records** with demographic and age-reference information.
 
-From a patient’s perspective, readmission is one part of a broader health journey. My long-term interest is in using data and AI to better understand how health needs develop after hospitalization. Future research could combine clinical history with relevant demographic, environmental, and potentially genetic information to study these trajectories. If carefully validated and used with clinical judgment, AI tools might help care teams recognize changing needs and discuss more personalized support with patients and families.
+Source validation found no missing patient or admission identifiers, no duplicate admission IDs, and no duplicate patient IDs in the patients table. All admissions matched a patient record.
 
-This project takes a focused first step: it evaluates whether MIMIC-IV data can predict a qualifying hospital readmission within 30 days. It does not yet predict other health problems, determine which services a patient needs, or measure whether follow-up care improves recovery or quality of life.
+Additional tables identified for feature engineering are `diagnoses_icd`, `procedures_icd`, `icustays`, `labevents`, and `chartevents`. Their use and derived features will be confirmed during feature review.
 
-### Clinical and Hospital Perspective
+### Eligibility Rules
 
-For a clinical team, discharge requires more than deciding that a patient is ready to leave a hospital bed. The team must communicate the care plan, reconcile medications, arrange follow-up, and identify needs that could make recovery at home difficult. Nurses, physicians, pharmacists, social workers, and care managers may each hold part of the information needed for that transition.
+Eligible index admissions required usable admission and discharge timestamps, discharge at or after admission, and estimated age of at least 18 years. Age was calculated as:
 
-For a hospital, studying readmissions can reveal patterns that deserve closer attention. Are patients returning after particular kinds of admissions? Are follow-up and care coordination needs being identified before discharge? Which patients might benefit from a more detailed review by the care team? A readmission prediction model could help organize these questions and prioritize further assessment. Its risk score should prompt investigation and conversation, rather than serve as an automatic decision about a patient’s care.
+```python
+age_at_admission = anchor_age + admission_year - anchor_year
+```
 
-As health data and AI tools develop, hospitals may be able to combine information across the care journey and recognize changing needs more effectively. The value of such tools would depend on reliable data, careful evaluation across patient groups, integration into clinical work, and evidence that using them actually improves care. This project examines the earlier step: whether information available by discharge can predict 30-day readmission with useful performance.
+Admissions were excluded when either `hospital_expire_flag = 1` or `discharge_location = "DIED"` indicated in-hospital death, or when discharge location indicated hospice. These exclusions applied to individual index admissions, rather than removing every admission belonging to that patient.
 
-### Potential Operational Use
-
-In a future hospital workflow, a validated readmission model could help create a discharge worklist for nurses and care managers. Staff could review patients with higher estimated risk before discharge, discuss barriers with the patient and family, and coordinate support matched to each person’s needs. After discharge, the team could track whether planned follow-up occurred and evaluate both patient outcomes and the workload required. The model would support prioritization; it would not determine treatment or services automatically. This project develops and evaluates a prediction model using historical data and does not test that operational workflow.
-
-## 3. Research Question & Prediction Task
-
-This section summarizes the research question, admission-level observations, outcome definition, prediction point, and potential application of the completed analysis.
-
-- **Research question:** Predicting 30-day readmission and interpreting model predictions.
-- **Unit of observation:** One eligible hospital admission.
-- **Target:** An observed hospital readmission within 30 days after discharge.
-- **Prediction point:** Hospital discharge.
-- **Intended use:** Supporting assessment and prioritization of discharge and follow-up needs.
-
-### Research Question
-
-The analysis examined the following question:
-
-Among eligible MIMIC-IV hospital admissions, how well could information available by discharge identify admissions at higher risk of readmission within 30 days, and which measured factors contributed most to those predictions?
-
-Logistic regression, random forest, and XGBoost were compared using ROC-AUC and PR-AUC. Model interpretation included SHAP analysis to examine feature contributions.
-
-Feature contributions describe how the model formed its predictions. They do not establish that a feature caused readmission or that changing it would reduce risk.
-
-### Unit of Observation
-
-The analysis used one eligible hospital admission, identified by `hadm_id`, as one observation. The patient identifier, `subject_id`, linked admissions belonging to the same person.
-
-Patients could contribute multiple eligible admissions. Each admission served as an index admission with its own discharge time, features, and outcome label. An admission that counted as a readmission after an earlier stay could also serve as an index admission if it met the eligibility criteria.
-
-The modeling data were split by patient. Admissions belonging to the same patient were kept in the same partition, preventing the same person from appearing in both training and test data.
-
-### Target
-
-The analysis constructed a binary outcome indicating whether an index admission was followed by an observed hospital readmission within 30 days after discharge:
-
-- **1 — Readmission:** A subsequent admission met the implemented readmission criteria within the 30-day window.
-- **0 — No observed readmission:** No subsequent admission met those criteria within the window.
-
-The interval was calculated from the index admission’s discharge time to the subsequent admission’s admission time.
-
-The exact eligibility, timing, and exclusion rules will be documented from the labeling code in Section 5. A label of 0 represents the absence of a qualifying readmission in the available data; it does not establish complete recovery or the absence of care elsewhere.
-
-### Prediction Point
-
-The analysis was framed as prediction at hospital discharge, using patient characteristics, prior utilization, and information from the index hospitalization.
-
-Variables that directly revealed the future admission, including the next admission time and days until the next admission, were excluded from the modeling inputs.
-
-The availability of the remaining predictors at discharge is being checked against their source and construction logic. Database records may contain information finalized after discharge, so retrospective availability does not automatically establish availability in a live hospital workflow.
-
-The results describe a discharge-time prediction task. Predictions made at admission or earlier during the stay would require a different set of available features.
-
-### Intended Use
-
-The completed analysis assessed readmission prediction using historical data. Its potential application is to support care teams in prioritizing closer review of discharge and follow-up needs.
-
-In a future hospital workflow, a validated model could help nurses and care managers identify patients who may need additional assessment. Staff could then discuss medication understanding, follow-up arrangements, transportation, caregiver support, mobility, and home services with the patient and family.
-
-The study did not evaluate clinical deployment or whether acting on predictions improved outcomes. Those questions would require further validation and an evaluation of the model within an actual care workflow.
-
-
-## 4. Dataset & Cohort Definition
-
-### Data Sources and Unit of Analysis
-
-Cohort construction used the MIMIC-IV admissions and patients tables.
-
-- **Admissions:** 546,028 hospital admission records representing
-  223,452 unique patients.
-- **Patients:** 364,627 patient records containing demographic and
-  age-reference information.
-
-The unit of analysis was one hospital admission, identified by `hadm_id`.
-A patient, identified by `subject_id`, could contribute multiple admissions.
-
-Source validation found no missing patient or admission identifiers,
-no duplicate admission IDs, and no duplicate patient IDs in the patients
-table. All admissions matched a patient record.
-
-### Eligibility and Exclusion Rules
-
-We retained adult admissions with usable admission and discharge
-timestamps and discharge occurring at or after admission.
-
-Admissions were excluded if either `hospital_expire_flag = 1` or
-`discharge_location = "DIED"` indicated in-hospital death, or if the
-discharge location indicated hospice. These criteria applied to individual
-admissions rather than all admissions belonging to a patient.
-
-Age at admission was estimated as:
-
-`age_at_admission = anchor_age + admission_year - anchor_year`
-
-The patient-information merge preserved the admission count. No admissions
-had missing estimated age or an estimated age below 18.
-
-All admission types were retained, including 13,019 elective admissions.
-Admission type described how the starting stay began and was not used
-as an exclusion criterion.
+No admissions had missing estimated age or estimated age below 18. All admission types were retained, including observation admissions and 13,019 elective admissions in the Step 2 cohort. Admission type described how the index stay began and was not an index exclusion criterion.
 
 ### Cohort Flow
 
-Exclusions were applied sequentially so each removed admission
-was counted once.
+Exclusions were applied sequentially so each removed admission was counted once. Step 2 established index eligibility; Step 3 applied additional exclusions needed for outcome construction.
 
 | Step | Stage | Admissions excluded | Admissions remaining |
 |------|-------|--------------------:|---------------------:|
@@ -328,25 +202,10 @@ was counted once.
 | 3 | Exclude uncertain returns | 23 | 524,334 |
 | 3 | Exclude unresolved mortality chronology | 25 | 524,309 |
 
-The validated **Step 2 cohort** contained **528,551 admissions
-from 216,762 unique patients**.
-
-The final **Step 3 labeled cohort** contained **524,309 admissions
-from 216,032 unique patients**.
-
-#### Outcome Distribution
-
-| 30-day readmission label | Admissions | Percentage |
-|-------------------------|-----------:|-----------:|
-| 1 — Qualifying recorded readmission | 106,111 | 20.24% |
-| 0 — No qualifying recorded readmission | 418,198 | 79.76% |
-| **Total** | **524,309** | **100.00%** |
-
-A negative label indicates no qualifying readmission recorded within
-30 days; it does not establish complete follow-up or survival.
-
-The validated **Step 2 cohort contained 528,551 admissions from
-216,762 unique patients**.
+| Cohort | Admissions | Unique patients |
+|--------|-----------:|----------------:|
+| Validated Step 2 cohort | 528,551 | 216,762 |
+| Final Step 3 labeled cohort | 524,309 | 216,032 |
 
 ### Data-Quality Findings
 
@@ -368,206 +227,138 @@ Hospice was indicated for 5,397 admissions, including 22 also identified
 by the death rule. The combined exclusion therefore removed
 17,302 unique admissions.
 
-### Saved Outputs and Handoff
 
-The validated Step 2 cohort contained **528,551 admissions from
-216,762 unique patients** and served as the input for Step 3
-readmission labeling.
+## 5. Readmission Outcome
 
-Step 3 subsequently excluded **4,194 overlapping or touching
-admissions**, **23 admissions with uncertain return status**, and
-**25 admissions with unresolved mortality chronology**. The final
-labeled cohort contained **524,309 admissions from 216,032 unique
-patients**, including:
+**Status: ✅ Completed**
 
-- **106,111 admissions** with a qualifying recorded readmission
-  within 30 days (`label_readmit_30d = 1`).
-- **418,198 admissions** without a qualifying recorded readmission
-  within 30 days (`label_readmit_30d = 0`).
+### Label Construction
 
-The labeled cohort was saved as `cohort_step3.csv` and is the input
-for Step 4 feature engineering. Future-event information used for
-label construction is stored separately in `label_audit_step3.csv`
-and is excluded from model predictors.
+Step 3 used two tables: the eligible Step 2 cohort supplied index admissions, and the full source admission history supplied candidate returns. This avoided losing candidate returns merely because those stays were ineligible as index observations.
 
-A negative label indicates no qualifying readmission recorded within
-30 days; it does not establish complete follow-up or survival.
-The cohort was saved as `cohort_step2.csv`, with 19 columns:
-the 16 original admission fields plus `anchor_age`, `anchor_year`,
-and `age_at_admission`. The aggregate cohort flow was saved as
-`cohort_step2_flow.csv`.
+The outcome window began at the index discharge, with the interval measured to the candidate return's admission time. Overlapping or touching encounters, uncertain returns, and unresolved mortality chronology were reviewed before finalizing the labeled cohort; their exclusion counts are recorded in the cohort-flow table.
 
-Final checks confirmed unique admission IDs, valid identifiers and
-timestamp ordering, adult eligibility, absence of admissions meeting
-the death/hospice exclusions, and reconciliation of exclusion counts.
-Read-back checks verified the exported admission IDs and patient count.
+| Label | Meaning | Admissions | Percentage |
+|-------|---------|-----------:|-----------:|
+| `1` | Qualifying recorded readmission within 30 days | 106,111 | 20.24% |
+| `0` | No qualifying recorded readmission within 30 days | 418,198 | 79.76% |
+| **Total** | | **524,309** | **100.00%** |
 
-This is the cohort of potential prediction observations, not yet the
-final labeled modeling sample. Step 3 will define qualifying 30-day
-returns and address overlapping encounters, transfers, and follow-up
-limitations. Any additional outcome-related exclusions will be documented
-separately.
+A negative label indicates no qualifying readmission recorded within 30 days. It does not establish complete follow-up, survival, recovery, or the absence of hospitalization elsewhere. The cohort should not be described as requiring survival for 30 days after discharge.
 
-
-### Verification Checklist for Sections 4–7
-
-The analysis has been completed. This checklist tracks the review of its implementation while the documentation is finalized. Each item should be supported by a notebook cell, script, or saved output.
-
-#### Section 4 — Dataset & Cohort Definition
-
-- [ ] Confirm the MIMIC-IV version and source tables actually used.
-- [ ] Recover the starting admission count and unique patient count.
-- [ ] Confirm how adult eligibility and age were calculated.
-- [ ] Identify each exclusion rule, its order, and the number of admissions removed.
-- [ ] Distinguish exclusions applied to index admissions from exclusions applied to subsequent readmissions.
-- [ ] Confirm handling of in-hospital deaths, hospice discharges, elective admissions, and transfers.
-- [ ] Confirm removal of duplicates and inconsistent admission or discharge timestamps.
-- [ ] Recover final admission and patient counts and reconcile them with the cohort flow.
-
-#### Section 5 — 30-Day Readmission Outcome
-
-- [ ] Confirm that admissions were ordered correctly within each patient.
-- [ ] Confirm whether labeling used the immediately next admission or the next qualifying admission.
-- [ ] Verify that the interval began at discharge rather than admission.
-- [ ] Check whether timing used exact elapsed time or rounded/truncated day values.
-- [ ] Confirm the treatment of same-day admissions, transfers, overlaps, and the 30-day boundary.
-- [ ] Confirm how planned or elective subsequent admissions were handled.
-- [ ] Check whether death exclusions applied only to the index stay, to the following 30 days, or to anyone with a recorded death.
-- [ ] Confirm how last admissions and uncertain follow-up were labeled.
-- [ ] Manually inspect several patients with multiple admissions to validate the labels.
-- [ ] Recover positive and negative label counts and the final readmission prevalence.
-
-#### Section 6 — Feature Engineering
-
-- [ ] Recover the final feature list from the dataset actually used for modeling.
-- [ ] Document each feature’s source table, calculation, and aggregation window.
-- [ ] Confirm that prior-utilization features used only events preceding the index admission.
-- [ ] Check that measurements and summaries did not include information from subsequent stays.
-- [ ] Verify age calculations, comorbidity scores, and diagnosis or procedure counts.
-- [ ] Confirm laboratory and vital-sign summaries, units, and missingness.
-- [ ] Verify missing-value indicators and categorical grouping rules.
-- [ ] Confirm whether raw discharge location, a grouped discharge feature, or neither was retained.
-- [ ] Review whether features could realistically have been available by discharge.
-- [ ] Reconcile the pipeline diagram with the features and tables actually used.
-
-#### Section 7 — Data Preparation & Leakage Prevention
-
-- [ ] Confirm which feature dataset and outcome labels were loaded for modeling.
-- [ ] Recover the patient-level split settings and train/test sizes.
-- [ ] Verify that no `subject_id` appeared in both training and test data.
-- [ ] Confirm that identifiers, outcome labels, next-admission fields, and other future information were excluded from predictors.
-- [ ] Confirm how numeric, categorical, and binary features were assigned to preprocessing steps.
-- [ ] Check that learned preprocessing, such as imputation, scaling, and encoding, was fitted on training data only.
-- [ ] If resampling or feature selection was used, confirm that it did not use test data.
-- [ ] Confirm that model or threshold selection did not repeatedly use the final test set.
-- [ ] Check that saved preprocessing and model artifacts match the reported analysis.
-
-**Review record:** For each resolved item, note the supporting code or output and whether the documentation alone changed or the analysis required correction.
-
-## 4. Dataset & Cohort Definition 🔄
-- MIMIC-IV data
-- Source tables
-- Starting population
-- Inclusion criteria
-- Exclusion criteria
-- Final number of admissions
-- Final number of patients
-- Cohort flow
-
-## 5. 30-Day Readmission Outcome
-- Index admission
-- Next admission
-- 30-day window
-- Definition of 1 vs. 0
-- Transfers
-- Deaths
-- Elective/planned admissions
-- Follow-up
-- Other edge cases
-- Readmission prevalence
+The detailed timing boundary, candidate-selection logic, and handling of elective returns and transfers should be traceable to the labeling notebook. Retaining elective **index admissions** does not by itself specify the eligibility of elective **returns**.
 
 ## 6. Feature Engineering
 
-### Tier 1 — Administrative / Demographic
-- Demographics
-- Insurance
-- Admission information
-- Prior utilization
+**Status:** Tier 1 is in progress. The table describes candidate feature groups, rather than a verified final model matrix.
 
-### Tier 2 — Clinical Burden / Care Intensity
-- Comorbidities
-- Diagnoses
-- Length of stay
-- ICU utilization
-- Procedures
-- Discharge information
+| Tier | Focus | Candidate features |
+|------|-------|--------------------|
+| 1 | Administrative and demographic | Age, gender, race/ethnicity, insurance, admission information, length of stay, discharge location, prior admission history |
+| 2 | Clinical burden and care intensity | Diagnosis count, procedure count, Charlson comorbidity score, ICU exposure |
+| 3 | Physiologic signals | Laboratory summaries, vital-sign summaries, temporal trends, relevant missingness indicators |
 
-### Tier 3 — Physiologic / Treatment
-- Laboratory results
-- Vital signs
-- Medications
-- Polypharmacy
-- Missingness indicators
+Features will be aggregated to the admission level using information available by index discharge. Prior-utilization features must use only history available before the index prediction point, with the lookback and inclusion rules documented explicitly.
 
-## 7. Data Preparation & Leakage Prevention
-- Missing data
-- Imputation
-- Encoding
-- Scaling
-- Leakage variables removed
-- Patient-level splitting
-- Train / validation / test sets
-- Preprocessing pipeline
+For each implemented feature, documentation will record its source table, calculation, time window, missingness, categorical grouping, and availability at prediction time. Medication and polypharmacy features require confirmed source tables and are not yet part of the verified feature specification.
 
-## 8. Modeling Approach
+## 7. Data Preparation and Leakage Prevention
 
-### Logistic Regression
-- Purpose
-- Pipeline
-- Main settings
+The following checks remain part of the review of the modeling workflow:
 
-### Random Forest
-- Purpose
-- Main settings
+- Keep all admissions from a patient in a single train, validation, or test partition; verify no `subject_id` crosses partitions.
+- Exclude identifiers, future admission fields, mortality information occurring after the prediction point, and other label-construction fields from predictors.
+- Fit imputation, scaling, encoding, and any learned feature selection on training data only.
+- Restrict resampling, tuning, and threshold selection to the appropriate training and validation data; reserve the test set for final evaluation.
+- Confirm that database fields used as predictors could have been available by discharge, including diagnoses and procedures that may be finalized later.
+- Record split settings, partition sizes, preprocessing choices, and saved artifact versions.
 
-### XGBoost
-- Purpose
-- Main settings
+Patient-level splitting prevents patient overlap between partitions. Repeated admissions within a partition still require consideration when estimating uncertainty and interpreting results.
 
-### Model Tuning
-- Tuning performed
-- Final model selection approach
+## 8. Modeling and Evaluation
 
-## 9. Evaluation Strategy
-- ROC-AUC
-- PR-AUC
-- Precision
-- Recall / Sensitivity
-- Specificity
-- Confusion matrix
-- Threshold analysis
-- Calibration
+The initial workflow included logistic regression, random forest, and XGBoost. Settings, tuning procedures, and model comparisons are pending verification against the code and saved outputs. Performance estimates will be added after that review.
 
-## 10. Results & Model Interpretation
-- Model comparison
-- Tier comparison
-- ROC / PR results
-- SHAP
-- Important predictors
-- Key findings
+| Area | Planned reporting |
+|------|-------------------|
+| Discrimination | ROC-AUC and PR-AUC |
+| Threshold performance | Precision, recall/sensitivity, specificity, and confusion matrices |
+| Calibration | Agreement between predicted risks and observed outcomes |
+| Model and tier comparisons | Performance across models and verified feature sets |
+| Interpretation | SHAP and other model diagnostics, where applicable |
 
-## 11. Limitations & Future Work
-- Dataset limitations
-- Outcome limitations
-- Missingness
-- Generalizability
-- Modeling limitations
-- Prediction vs. causation
-- Future improvements
+Feature contributions explain model predictions. They do not establish causes of readmission or show that changing a feature would reduce risk.
 
-## 12. Repository Structure & Reproducibility
-- Repository organization
-- Notebook execution order
-- Environment / requirements
-- MIMIC-IV access requirements
-- Reproduction workflow
+## 9. Limitations and Future Work
+
+- **Outcome ascertainment:** Recorded returns do not capture all care outside the source system; a negative label does not guarantee full observation of the outcome window.
+- **Mortality and encounter chronology:** Conflicting records and overlapping encounters required explicit review and exclusions.
+- **Repeated admissions:** Multiple admissions from one patient are correlated; evaluation and uncertainty estimates must account for this structure.
+- **Availability and missingness:** Retrospective database information may differ from what a clinical team could access at discharge. Missingness may reflect care processes as well as patient condition.
+- **Generalizability:** Performance on this historical cohort does not establish performance in another hospital, time period, or patient population.
+- **Clinical impact:** Prediction performance does not establish preventability of readmission or benefit from an intervention.
+
+Future work includes verifying the complete modeling pipeline, examining calibration and performance across relevant patient groups, and evaluating transportability before considering operational use.
+
+## 10. Outputs and Reproducibility
+
+### Cohort and Label Outputs
+
+| File | Purpose |
+|------|---------|
+| `cohort_step2.csv` | Validated eligible index admissions; 19 columns: 16 admission fields plus `anchor_age`, `anchor_year`, and `age_at_admission` |
+| `cohort_step2_flow.csv` | Aggregate Step 2 cohort accounting |
+| `cohort_step3.csv` | Input for Step 4; 19 cohort columns plus `label_readmit_30d` |
+| `label_audit_step3.csv` | Label-validation details, including future-event information; excluded from model inputs |
+
+Step 2 export checks confirmed unique admission IDs, identifier and timestamp validity, adult eligibility, exclusion-count reconciliation, and matching admission IDs and patient counts after read-back.
+
+### Review Samples
+
+Selected notebooks are available in [publication_review](https://github.com/jx82/MIMIC-IV3.1-Readmission-ML/tree/main/publication_review).
+
+### Reproduction Status
+
+The execution order follows Steps 1–7 in the pipeline. Exact notebook paths, environment requirements, feature-output filenames, and execution instructions will be finalized during repository cleanup. Reproduction requires authorized access to MIMIC-IV; source clinical data are not included in this README.
+
+## 11. Documentation Progress
+
+### Current Analysis Progress
+
+| Section | Contents | Status |
+|---------|----------|--------|
+| **4. Data Sources and Cohort Construction** | Source-table validation; identifiers; timestamp checks; adult eligibility; death/hospice exclusions; admission-type review; cohort flow and quality checks. | ✅ Completed |
+| **5. Readmission Outcome** | Index admissions linked to full admission history; discharge-to-return intervals; qualifying 30-day returns; overlap and mortality chronology review; final labels and audit outputs. | ✅ Completed |
+| **6. Feature Engineering — Tier 1** | Administrative and demographic predictors; length of stay; categorical grouping; missingness review; prior admission history. | 🔄 In progress |
+| **6. Feature Engineering — Tier 2** | Clinical burden and care intensity features. | ⬜ Pending review |
+| **6. Feature Engineering — Tier 3** | Laboratory and vital-sign summaries. | ⬜ Pending review |
+| **7. Data Preparation and Leakage Prevention** | Patient-level splitting; preprocessing; predictor availability and leakage checks. | ⬜ Pending review |
+| **8. Modeling and Evaluation** | Model comparison; discrimination; calibration; threshold diagnostics; interpretation. | ⬜ Pending review |
+
+### Review Schedule
+
+The detailed schedule below tracks the current reconstruction and documentation review. Completed dates reflect the supplied review record; future dates are targets. Pending review does not imply the initial modeling work was never performed.
+
+| Review / Target Date | Focus | Review status |
+|---------------------|-------|--------|
+| Oct 10, 2026 | README structure & project overview | ✅ Completed |
+| Oct 12, 2026 | Cohort definition | ✅ Completed |
+| Oct 20, 2026 | 30-day readmission outcome | ✅ Completed |
+| Oct 22, 2026 | Cohort edge cases & exclusions | ✅ Completed |
+| Oct 26, 2026 | Tier 1 features | 🔄 In progress |
+| Oct 27, 2026 | Tier 2 features | ⬜ Pending review |
+| Oct 28, 2026 | Tier 3 features | ⬜ Pending review |
+| Oct 29, 2026 | Data leakage review | ⬜ Pending review |
+| Oct 30, 2026 | Patient-level data splitting | ⬜ Pending review |
+| Oct 31, 2026 | Preprocessing pipeline | ⬜ Pending review |
+| Nov 1, 2026 | Logistic Regression | ⬜ Pending review |
+| Nov 2, 2026 | Random Forest | ⬜ Pending review |
+| Nov 3, 2026 | XGBoost | ⬜ Pending review |
+| Nov 4, 2026 | Evaluation metrics | ⬜ Pending review |
+| Nov 5, 2026 | Model results | ⬜ Pending review |
+| Nov 6, 2026 | SHAP & model interpretation | ⬜ Pending review |
+| Nov 7, 2026 | Key findings | ⬜ Pending review |
+| Nov 8, 2026 | Limitations & future work | ⬜ Pending review |
+| Nov 9, 2026 | Repository cleanup & reproducibility | ⬜ Pending review |
+| Nov 10, 2026 | Final README review | ⬜ Pending review |
+| Nov 11, 2026 | README v1.0 publication | ⬜ Pending review |
