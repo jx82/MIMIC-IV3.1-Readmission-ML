@@ -370,6 +370,28 @@ by the death rule. The combined exclusion therefore removed
 
 ### Saved Outputs and Handoff
 
+The validated Step 2 cohort contained **528,551 admissions from
+216,762 unique patients** and served as the input for Step 3
+readmission labeling.
+
+Step 3 subsequently excluded **4,194 overlapping or touching
+admissions**, **23 admissions with uncertain return status**, and
+**25 admissions with unresolved mortality chronology**. The final
+labeled cohort contained **524,309 admissions from 216,032 unique
+patients**, including:
+
+- **106,111 admissions** with a qualifying recorded readmission
+  within 30 days (`label_readmit_30d = 1`).
+- **418,198 admissions** without a qualifying recorded readmission
+  within 30 days (`label_readmit_30d = 0`).
+
+The labeled cohort was saved as `cohort_step3.csv` and is the input
+for Step 4 feature engineering. Future-event information used for
+label construction is stored separately in `label_audit_step3.csv`
+and is excluded from model predictors.
+
+A negative label indicates no qualifying readmission recorded within
+30 days; it does not establish complete follow-up or survival.
 The cohort was saved as `cohort_step2.csv`, with 19 columns:
 the 16 original admission fields plus `anchor_age`, `anchor_year`,
 and `age_at_admission`. The aggregate cohort flow was saved as
