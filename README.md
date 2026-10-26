@@ -102,11 +102,12 @@ Each eligible hospital admission is one observation, so a patient may contribute
 ### Project Architecture - Readmission Prediction Pipeline
 
 ```text
-                     MIMIC-IV Raw Tables
+                    
+MIMIC-IV Raw Tables
  ┌──────────────────────────────────────────────────────────────┐
  │                                                              │
- │  admissions.csv        diagnoses_icd.csv     procedures_icd  │
- │  patients.csv          icustays.csv          labevents.csv   │
+ │  admissions.csv      diagnoses_icd.csv    procedures_icd.csv │
+ │  patients.csv        icustays.csv         labevents.csv      │
  │  chartevents.csv                                             │
  │                                                              │
  └──────────────────────────────────────────────────────────────┘
@@ -120,11 +121,11 @@ Each eligible hospital admission is one observation, so a patient may contribute
                  Step 2 — Cohort Definition
               Apply sequential eligibility criteria
 
-              • Unusable timestamps excluded:       0
-              • Reversed timestamps excluded:     175
-              • Death or hospice excluded:     17,302
-              • Estimated age below 18 excluded:    0
-              • Admission-type exclusions:          0
+              • Unusable timestamps excluded:           0
+              • Reversed timestamps excluded:         175
+              • Death or hospice excluded:         17,302
+              • Estimated age below 18 excluded:       0
+              • Admission-type exclusions:             0
 
               Death/hospice exclusion:
               11,927 death-indicated admissions
@@ -132,25 +133,40 @@ Each eligible hospital admission is one observation, so a patient may contribute
                   22 meeting both criteria
               11,927 + 5,397 − 22 = 17,302
 
-              Elective admissions retained
-                              |
-                              v
+              Elective and observation admissions retained
+                                │
+                                ▼
                    Validated Step 2 Cohort
                      528,551 admissions
                      216,762 unique patients
                      19 columns
-                              |
-                              v
+                                │
+                                ▼
               Step 3 — Readmission Label Construction
               Identify qualifying recorded returns
                  within 30 days after discharge
-              using the source admission history
+              using the full source admission history
 
-              Review overlaps, transfers, and follow-up
-              Final labeled sample size: pending review
+              Additional exclusions:
+              • Overlapping/touching admissions:     4,194
+              • Uncertain returns:                      23
+              • Unresolved mortality chronology:        25
+
+              528,551 − 4,194 − 23 − 25 = 524,309
+                                │
+                                ▼
+                    Final Step 3 Labeled Cohort
+                     524,309 admissions
+                     216,032 unique patients
+                     19 cohort columns + outcome label
+
+                     Readmission (Y = 1):       106,111
+                     No recorded return (Y = 0): 418,198
                                 │
                                 ▼
                     Step 4 — Feature Engineering
+                            In progress
+            Construct predictors available by discharge
             Aggregate clinical tables to admission-level
                                 │
           ┌─────────────────────┼─────────────────────┐
@@ -161,14 +177,20 @@ Each eligible hospital admission is one observation, so a patient may contribute
 
    age                   diagnosis_count       vital summaries
    gender                procedure_count       lab summaries
-   ethnicity             charlson_score        medication features
-   insurance             los_days              temporal trends
-   prior_admits          icu_flag
-                         discharge_location
+   race/ethnicity        charlson_score        temporal trends
+   insurance             icu_flag
+   los_days
+   discharge_location
+   prior_admits
+          │                     │                     │
+          └─────────────────────┼─────────────────────┘
                                 │
                                 ▼
-                     Step 5 — Modeling Dataset
+               Step 5 — Modeling Dataset and Split
+                             Planned
                Final admission-level feature table
+               Patient-level train/validation/test split
+               Fit preprocessing on training data only
                                 │
                                 ▼
                          Feature Matrix
@@ -177,11 +199,16 @@ Each eligible hospital admission is one observation, so a patient may contribute
                                 │
                                 ▼
                         Step 6 — Modeling
+                             Planned
              Logistic Regression | Random Forest | XGBoost
                                 │
                                 ▼
-                       Step 7 — Evaluation
-                     ROC-AUC | SHAP | Diagnostics
+               Step 7 — Evaluation and Interpretation
+                             Planned
+              ROC-AUC | PR-AUC | Calibration | SHAP
+
+Note: Y = 0 means no qualifying readmission was recorded within
+30 days; it does not establish complete follow-up or survival.
 ```
 The exact cohort rules and results are being checked against the analysis code as this README is completed.
 High-priority verification item: I require survival for 30 days after discharge, and need to verify how the variable of "discharge_location = died" is measured and defined. 
