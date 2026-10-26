@@ -7,8 +7,6 @@
 > cohort construction, outcome definition, feature engineering, leakage
 > prevention, and model evaluation against the original analysis code.
 >
-> **Target for documented v1.0: October 15, 2026.**
-
 ## Project Progress
 
 - [ ] Project question and objectives
@@ -58,30 +56,6 @@ incorporated into the final README.
 | Nov 9, 2026 | Repository cleanup & reproducibility | ⬜ Planned |
 | Nov 10, 2026 | Final README review | ⬜ Planned |
 | Nov 11, 2026 | README v1.0 publication | ⬜ Planned |
-
-# Predicting 30-Day Hospital Readmission Using MIMIC-IV
-
-> **Project Status: Active Reconstruction & Documentation**
->
-> This project is currently being systematically reviewed and documented.
-> Each section is being verified against the original analysis code and
-> results before final publication.
->
-> **Target README v1.0: October 15, 2026**
-
----
-
-## Documentation Progress
-
-- 🔄 Current focus: Dataset & Cohort Definition
-- ⬜ Next: 30-Day Readmission Outcome
-- ⬜ Feature Engineering
-- ⬜ Data Preparation & Leakage Prevention
-- ⬜ Modeling
-- ⬜ Evaluation
-- ⬜ Results & Interpretation
-- ⬜ Limitations
-- ⬜ Reproducibility
 
 ---
 
