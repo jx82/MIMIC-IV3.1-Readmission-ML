@@ -130,9 +130,9 @@ MIMIC-IV Raw Tables
    gender                procedure_count       lab summaries
    race/ethnicity        charlson_score        temporal trends
    insurance             icu_flag
-   los_days
-   discharge_location
+   discharge_location    los_days
    prior_admits
+
           │                     │                     │
           └─────────────────────┼─────────────────────┘
                                 │
