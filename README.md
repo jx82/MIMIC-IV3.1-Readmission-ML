@@ -329,8 +329,8 @@ The execution order follows Steps 1–7 in the pipeline. Exact notebook paths, e
 |---------|----------|--------|
 | **4. Data Sources and Cohort Construction** | Source-table validation; identifiers; timestamp checks; adult eligibility; death/hospice exclusions; admission-type review; cohort flow and quality checks. | ✅ Completed |
 | **5. Readmission Outcome** | Index admissions linked to full admission history; discharge-to-return intervals; qualifying 30-day returns; overlap and mortality chronology review; final labels and audit outputs. | ✅ Completed |
-| **6. Feature Engineering — Tier 1** | Administrative and demographic predictors; length of stay; categorical grouping; missingness review; prior admission history. | 🔄 In progress |
-| **6. Feature Engineering — Tier 2** | Clinical burden and care intensity features. | ⬜ Pending review |
+| **6. Feature Engineering — Tier 1** | Administrative and demographic predictors; length of stay; categorical grouping; missingness review; prior admission history. | ✅ Completed |
+| **6. Feature Engineering — Tier 2** | Clinical burden and care intensity features. | 🔄 In progress |
 | **6. Feature Engineering — Tier 3** | Laboratory and vital-sign summaries. | ⬜ Pending review |
 | **7. Data Preparation and Leakage Prevention** | Patient-level splitting; preprocessing; predictor availability and leakage checks. | ⬜ Pending review |
 | **8. Modeling and Evaluation** | Model comparison; discrimination; calibration; threshold diagnostics; interpretation. | ⬜ Pending review |
