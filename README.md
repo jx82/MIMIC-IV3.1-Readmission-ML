@@ -345,8 +345,8 @@ The detailed schedule below tracks the current reconstruction and documentation 
 | Oct 12, 2026 | Cohort definition | ✅ Completed |
 | Oct 20, 2026 | 30-day readmission outcome | ✅ Completed |
 | Oct 22, 2026 | Cohort edge cases & exclusions | ✅ Completed |
-| Oct 26, 2026 | Tier 1 features | 🔄 In progress |
-| Oct 27, 2026 | Tier 2 features | ⬜ Pending review |
+| Oct 26, 2026 | Tier 1 features | ✅ Completed|
+| Oct 27, 2026 | Tier 2 features | 🔄 In progress |
 | Oct 28, 2026 | Tier 3 features | ⬜ Pending review |
 | Oct 29, 2026 | Data leakage review | ⬜ Pending review |
 | Oct 30, 2026 | Patient-level data splitting | ⬜ Pending review |
