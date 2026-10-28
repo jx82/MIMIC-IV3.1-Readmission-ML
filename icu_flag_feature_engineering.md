@@ -347,11 +347,8 @@ The reviewed cell completed its assertions without error. The final feature rema
 - **Model preprocessing remains downstream.** Use a patient-level split; fit learned preprocessing on training data only. Repeated admissions remain correlated within patients.
 - **Predictive association is not causation.** Model coefficients or feature importance do not establish that ICU care causes readmission.
 
-## 10. Suggested GitHub location
 
-Save this file as `docs/icu_flag_feature_engineering.md` and link it from the Step 4 notebook or repository README. It contains aggregate audit counts and illustrative dates, with no individual admission identifiers.
-
-## 11. Clinical encounter structure and source coverage
+## 10. Clinical encounter structure and source coverage
 
 In the expected encounter structure, ICU care is a location or care-unit episode within a hospital encounter. A patient may enter through the emergency department, move to a ward, transfer to ICU, return to a ward, and then leave the hospital. Leaving ICU does not necessarily mean leaving the hospital. One hospital admission can contain multiple ICU stays.
 
