@@ -123,15 +123,15 @@ MIMIC-IV Raw Tables
           ▼                     ▼                     ▼
 
    Tier 1 Features        Tier 2 Features        Tier 3 Features
-    (In progress)        (Pending review)      (Pending review)
+   (completed)           (in progress)         (Pending review)
    (Administrative)      (Clinical Burden)     (Physiologic Signals)
 
    age                   diagnosis_count       vital summaries
    gender                procedure_count       lab summaries
    race/ethnicity        charlson_score        temporal trends
    insurance             icu_flag
-   discharge_location    los_days
-   prior_admits
+   prior_admits          los_days
+                         discharge_location
 
           │                     │                     │
           └─────────────────────┼─────────────────────┘
